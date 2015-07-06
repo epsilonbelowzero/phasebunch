@@ -1,6 +1,6 @@
 #!/bin/sh
 
-programName="parallelParts"
+programName="phasebunch"
 
 echo "$(tput setab 7)                         $(tput sgr0)"
 echo "$(tput setab 7)  $(tput sgr0) $(tput bold)$(tput setaf 4)build $programName$(tput sgr0) $(tput setab 7)  $(tput sgr0)"
@@ -24,7 +24,7 @@ done
 
 if [ "$(pwd)" = "/" ]
 then
-	echo "Please go into parallelParts-directory or in a sub-directory of it."
+	echo "Please go into ${programName}-directory or in a sub-directory of it."
 	exit 3
 fi
 
