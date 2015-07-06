@@ -1,5 +1,14 @@
+build/
+build/*
 CMakeCache.txt
-CMakeFiles
 Makefile
+CMakeFiles/
+CMakeFiles/*
 cmake_install.cmake
-install_manifest.txt
+formelsammlung_chattopadhyay.aux
+formelsammlung_chattopadhyay.log
+formelsammlung_chattopadhyay.pdf
+formelsammlung_chattopadhyay.out
+formelsammlung_chattopadhyay.synctex.gz
+distribution*
+process_distribution.cpython-34m.so
