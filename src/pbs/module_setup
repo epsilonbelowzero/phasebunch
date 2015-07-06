@@ -1,0 +1,10 @@
+#!/bin/bash
+#module setup
+
+. /etc/profile.modules
+
+module purge
+
+module load gcc/4.9.2
+module load boost
+module load cmake/3.0.1

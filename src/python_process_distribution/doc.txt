@@ -1,0 +1,35 @@
+This module extends the python interpretia by compiling it to a shared
+lib (.so) file.
+
+The problem which is solved is the following: each particle (varying)
+has a position between 0 and 2*pi has to be sorted into subintervals of
+[0, 2*pi] of same length; the number of those subintervals varies also,
+depending on parameter given to the function (standard: 1000).
+
+The earlier python skript solved the problem, but it took a lot of time
+(500.000 particles in about 5min, now 50.000.000 particles in about 10s).
+
+The c-program reads the positional data of the particles of the format
+given in Init.h of the main program, sorting it via a parallel quicksort
+and afterwards counting the number of particles which would be in the 
+same interval, converting into a numpy-array and returning this array
+to the interpreter and the main-program, which calls this c-program.
+
+For building a python extension as its done here, have a look at
+ -Example: https://docs.python.org/3/extending/building.html#building
+ -Doc: https://docs.python.org/3/distutils/apiref.html#module-distutils.core
+ 
+For an easy first example, refer to
+ -Example-Doc: https://docs.python.org/3/extending/extending.html
+ -Doc: https://docs.python.org/3.1/c-api/structures.html#PyMethodDef
+ -Doc: https://docs.python.org/3.1/c-api/module.html#PyModuleDef
+(the bottom most 2 entries documentating the structures of a python
+module [so the interpreter knows it; PyModuleDef] and about the 
+functions which can be called from the interpreter [PyMethodDef])
+
+For numpy, please note that its a module and needs to be initialised.
+ -http://docs.scipy.org/doc/numpy/reference/c-api.html
+ 
+General python-c-doc:
+ -https://docs.python.org/3/c-api/index.html
+
