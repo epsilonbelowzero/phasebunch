@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 2.8.12)
 # Project
 #################
 
-project(parallelParts)
+project(phaseBunch)
 set(CMAKE_CXX_FLAGS "-std=c++11 -Ofast")
 set(LIBS)
 
@@ -45,9 +45,9 @@ set(LIBS ${LIBS} ${HDF5_LIBRARIES})
 
 file(GLOB_RECURSE SRC_FILES "*.cpp")
 
-add_executable(parallelparts ${SRC_FILES})
+add_executable(phaseBunch ${SRC_FILES})
 
-target_link_libraries(parallelparts ${OpenMP_CXX_FLAGS} ${LIBS} ) #${MPI_Libraries}
+target_link_libraries(phaseBunch ${OpenMP_CXX_FLAGS} ${LIBS} ) #${MPI_Libraries}
 
 
 
@@ -56,5 +56,5 @@ target_link_libraries(parallelparts ${OpenMP_CXX_FLAGS} ${LIBS} ) #${MPI_Librari
 
 
 if(UNIX)
-	target_link_libraries(parallelparts m)
+	target_link_libraries(phaseBunch m)
 endif()
