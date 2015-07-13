@@ -1,9 +1,9 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-long double Ex(long double x,long double y,long double z,long double t){
+long double Ex(long double x,long double t){
     
-    return - 0.025165280916119262*x;
+    return - 0.0005*x;
 
 }
 

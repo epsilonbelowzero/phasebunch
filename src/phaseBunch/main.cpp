@@ -25,13 +25,12 @@ int main(int argc, char** argv) {
         &len,
         &times,
         &p,
-	&freq
+		&freq
     );
 
     printf("Computing...\n");
     compute(t_start, t_end, dt,
-        p.x,p.y,p.z,
-        p.px,p.py,p.pz,
+        p.x, p.px,
         p.m,p.q, len,
         &k, &times,
         beamspeed, circumference,

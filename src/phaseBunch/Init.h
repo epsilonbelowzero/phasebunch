@@ -20,18 +20,16 @@
 
 typedef struct part{
 
-  long double *x,*y,*z,
-         *px,*py,*pz,
-         *q,*m;
+  long double *x, *px, *q, *m;
 
 
 } particle;
 
-void init(long double* t_start, long double *t_end, long double *dt,
+void init(	long double* t_start, long double *t_end, long double *dt,
             long double *beamspeed, long double *circumference,
             int *length,
             long double **times, particle *p,
-	    long double *freq
+			long double *freq
 ) {
     //loop-variable for later use
     int i;
@@ -48,7 +46,7 @@ void init(long double* t_start, long double *t_end, long double *dt,
 
     *freq = 1e6;
     const double omega = 2 * M_PI * (*freq);
-    const double deltaOmega = 2 * M_PI * 1e4;
+    const double deltaOmega = 2 * M_PI * 1e5;
 
     //generator: generates random numbers, initialising using a seed (unix time)
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -62,18 +60,14 @@ void init(long double* t_start, long double *t_end, long double *dt,
      * of the energie, whereas delta E / E = beta**2 * delta p / p with
      * delta p / p = 1e-5. E = 122 MeV/u, 12C3+ are considered
      */
-    std::normal_distribution<long double> angle(M_PI, 0.5);
-    std::normal_distribution<long double> anglevelocity(omega, deltaOmega);
+    std::normal_distribution<long double> position(0, 5);
+    std::normal_distribution<long double> velocity(omega, deltaOmega);
     
     //allocate memory for each component of position
     p->x = (long double*) malloc(sizeof(long double) * (*length));
-    p->y = (long double*) malloc(sizeof(long double) * (*length));
-    p->z = (long double*) malloc(sizeof(long double) * (*length));
 
     //allocate memory for each component of momentum
     p->px = (long double*) malloc(sizeof(long double) * (*length));
-    p->py = (long double*) malloc(sizeof(long double) * (*length));
-    p->pz = (long double*) malloc(sizeof(long double) * (*length));
 
     //allocate memory for mass and charge
     p->q = (long double*) malloc(sizeof(long double) * (*length));
@@ -83,22 +77,11 @@ void init(long double* t_start, long double *t_end, long double *dt,
     for(i=0; i < (*length); i++) {
 
         //initialise everything else
-        p->px[i] = 2*M_PI*1e6;
-        p->py[i] = 0; //in eV
-        p->pz[i] = 0;// in eV
+        p->px[i] = velocity(generator);
 
-        long double dist = angle(generator);
-        //~ if (dist > 0) {
-            //~ dist = fmod(dist, 2* M_PI);
-        //~ }
-        //~ else {
-            //~ dist = 2 * M_PI - fmod(fabs(dist), 2* M_PI);
-        //~ }
-        p->x[i]  = dist;//in m
-        p->y[i]  = 0;//in m
-        p->z[i]  = 0;//in m
+        p->x[i]  = position(generator);//in m
         p->q[i] = 1;//in number of the elementary charge
-        p->m[i] = 11177.928732e6;//in eV
+        p->m[i] = 0.5e6;//in eV
         
     }
     
