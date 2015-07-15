@@ -5,7 +5,6 @@
 #include "Destruct.h"
 #include "Compute.h"
 #include "Params.h"
-#include "Prints.h"
 
 int main(int argc, char** argv) {
 
@@ -14,7 +13,6 @@ int main(int argc, char** argv) {
 
     long double t_start, t_end, dt;
     long double beamspeed, circumference;
-    long double *times;
     long double freq;
     int len, k;
     particle p;
@@ -23,7 +21,6 @@ int main(int argc, char** argv) {
     init(&t_start, &t_end, &dt,
         &beamspeed, &circumference,
         &len,
-        &times,
         &p,
 		&freq
     );
@@ -32,15 +29,11 @@ int main(int argc, char** argv) {
     compute(t_start, t_end, dt,
         p.x, p.px,
         p.m,p.q, len,
-        &k, &times,
+        &k,
         beamspeed, circumference,
 	&freq);
 
-
-    printf("Printing...\n");
-    print_signal(&times,len,k);
-
-    destruct(p, &times);
+    destruct(p);
 
     return EXIT_SUCCESS;
 }

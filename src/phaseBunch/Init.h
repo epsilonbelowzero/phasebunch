@@ -35,14 +35,14 @@ inline double computeFactor(double velocity) { //from c*p = gamma * beta * E0
 void init(	long double* t_start, long double *t_end, long double *dt,
             long double *beamspeed, long double *circumference,
             int *length,
-            long double **times, particle *p,
+            particle *p,
 			long double *freq
 ) {
     //loop-variable for later use
     int i;
 
     //initialise length (from array length): number of particles
-    *length = 5e5;
+    *length = 1e1;
     
     *t_start = 0;//in seconds
     *t_end   = 1e-5;//in seconds
@@ -104,11 +104,6 @@ void init(	long double* t_start, long double *t_end, long double *dt,
     H5LTmake_dataset(file_id,"/params",1,dims,H5T_NATIVE_DOUBLE,tmp);
     H5Fclose(file_id);
 	free(tmp);
-
-    int s =(int) ceil(((*t_end) - (*t_start)) / (*dt)  + 3) * 2;
-
-    printf("s = %i\n", s);
-    (*times) =(long double*) malloc(sizeof(long double) * s);
 }
 
 
