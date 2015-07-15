@@ -65,16 +65,22 @@ void compute(
     long double *freq
 ) {
 
-    int i,j, l;
+    int i,j;
 
-    long double t, I;
+    long double t;
     long double h = 1 / ((*freq) * dt);
-    for( t = t_start,j = 0; t < t_end - dt; t += dt, j++) {
+    for( t = t_start,j = 1; t < t_end - dt; t += dt) {
 
 #pragma omp parallel for default(none) private(i) shared(len, x, px, dt, m, q, t)
         for(i = 0; i < len; i++) {
 			updateParticle(t, dt, &(x[i]), &(px[i]), q[i], m[i]);
         }
+        
+        //check, whether sync-particle passed the detector
+        if( 2 * M_PI / (*freq) * t > j * circumference ) {
+			//store the current particle-positions, corrected by the current time
+			//(the particle's offset to the sync-particles are computed)
+		}
 
     }
 

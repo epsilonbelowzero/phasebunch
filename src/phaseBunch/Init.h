@@ -12,7 +12,7 @@
 #include <cmath>
 
 #ifndef SOL
-#define SOL 299792458
+#define SOL 299792458.0f
 #endif
 #ifndef ELEMENTARY_CHARGE
 #define ELEMENTARY_CHARGE (1.602176565e-19)
@@ -24,6 +24,13 @@ typedef struct part{
 
 
 } particle;
+
+inline double computeVelocity(double amplitude, double circularFrequency) {
+	return amplitude * circularFrequency; //From x = A * cos(omega * t) -> x' = A * omega * cos(omega * t), for starting velocity: t==0
+}
+inline double computeFactor(double velocity) { //from c*p = gamma * beta * E0
+	return velocity/SOL * 1/sqrt(1 - (velocity*velocity)/(SOL*SOL));
+}
 
 void init(	long double* t_start, long double *t_end, long double *dt,
             long double *beamspeed, long double *circumference,
@@ -38,15 +45,16 @@ void init(	long double* t_start, long double *t_end, long double *dt,
     *length = 5e5;
     
     *t_start = 0;//in seconds
-    *t_end   = 5e-4;//in seconds
+    *t_end   = 1e-5;//in seconds
     *dt      = 1e-9;//in seconds
     
     *beamspeed = 0.467 * SOL;
     *circumference = 108.5;//m
 
-    *freq = 1e6;
+	double amplitude = 5;//unit: meter
+    *freq = 1e6;//unit: hearts
     const double omega = 2 * M_PI * (*freq);
-    const double deltaOmega = 2 * M_PI * 1e5;
+    const double deltaOmega = 2 * M_PI * 1e5 * 0;
 
     //generator: generates random numbers, initialising using a seed (unix time)
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -60,8 +68,8 @@ void init(	long double* t_start, long double *t_end, long double *dt,
      * of the energie, whereas delta E / E = beta**2 * delta p / p with
      * delta p / p = 1e-5. E = 122 MeV/u, 12C3+ are considered
      */
-    std::normal_distribution<long double> position(0, 5);
-    std::normal_distribution<long double> velocity(omega, deltaOmega);
+    std::normal_distribution<long double> position(0, 0);
+    std::normal_distribution<long double> circularFrequency(omega, deltaOmega);
     
     //allocate memory for each component of position
     p->x = (long double*) malloc(sizeof(long double) * (*length));
@@ -75,19 +83,16 @@ void init(	long double* t_start, long double *t_end, long double *dt,
 
     //initialise each parameter for each particle
     for(i=0; i < (*length); i++) {
-
-        //initialise everything else
-        p->px[i] = velocity(generator);
-
-        p->x[i]  = position(generator);//in m
+		p->x[i]  = position(generator);//in m
         p->q[i] = 1;//in number of the elementary charge
         p->m[i] = 0.5e6;//in eV
+        p->px[i] = computeFactor(computeVelocity(amplitude, circularFrequency(generator))) * p->m[i];
         
     }
     
     double *tmp;
     tmp = (double*) malloc(sizeof(double) * (*length));
-    for(i=0; i < (*length); i++) { tmp[i] = (double) p->x[i]; }
+    for(i=0; i < (*length); i++) { tmp[i] = (double) p->px[i]; }
     
     hid_t file_id;
 	hsize_t dims[1];
@@ -98,6 +103,7 @@ void init(	long double* t_start, long double *t_end, long double *dt,
     tmp[0] = (*dt);  tmp[1] = (double) *freq; 
     H5LTmake_dataset(file_id,"/params",1,dims,H5T_NATIVE_DOUBLE,tmp);
     H5Fclose(file_id);
+	free(tmp);
 
     int s =(int) ceil(((*t_end) - (*t_start)) / (*dt)  + 3) * 2;
 
