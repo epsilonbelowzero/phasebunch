@@ -14,13 +14,12 @@ if len(sys.argv) < 2:
 	sys.exit(1)
 
 dist = process_distribution.process(sys.argv[1])
-x = np.linspace(0, 2* np.pi, len(dist))
 
 fig = plt.figure()
 
 ax = fig.add_subplot(111)
 
-ax.plot(x, dist)
+ax.plot(dist[0], dist[1])
 #~ ax.plot(data[:i] if not singleCol else data, 'ro')
 ax.set_xlabel("$\mathbf{n \cdot dt}$")
 

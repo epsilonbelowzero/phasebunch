@@ -84,21 +84,85 @@ static int readFile(char** filename, double **array, int* lines) {
  * of particles), length denotes the interval-length (usually 2*pi).
  * Note, that the array data is sorted!
  */
-static int insertInIntervals(double* data, int len, double length, int count, int** result) {
-	*result = (int*) malloc(sizeof(int) * count);
+static int insertInIntervals(double* data, int len, double length, double intervalStart, int* count, int** result, double** x) {
 	
-	int k = 0, //caches the position of the last particle of the lower subinterval
-		j;
-	
-	for(int i = 0; i < count; i++) {	
-		j = k;
-		while(j < len && data[j] < (i + 1) * length / count) { j++; }
+	if( length <= 0 ) {
 		
-		(*result)[i] = j - k;
-		k = j;
+		if( data[len - 1] == data[0] ) { //all entries are equal
+			*count = 3;
+			
+			*result = (int*) malloc(sizeof(int) * (*count));
+			*x = (double*) malloc(sizeof(double) * (*count));
+			
+			(*x)[0] = data[0] - 1;
+			(*x)[1] = data[0];
+			(*x)[2] = data[0] + 1;
+			
+			(*result)[0] = 0;
+			(*result)[1] = len;
+			(*result)[2] = 0;
+			
+			return 0;
+		}
+		else {
+			length = (data[len - 1] - data[0]) / (*count - 2);
+		}
 	}
 	
+	*result = (int*) malloc(sizeof(int) * (*count));
+	*x = (double*) malloc(sizeof(double) * (*count));
+	
+#pragma omp parallel sections
+{
+	
+	#pragma omp section
+	{
+		for(int i = 0; i < *count; i++) {
+			(*x)[i] = length / (*count) * i + intervalStart;
+		}
+	}
+	
+	#pragma omp section
+	{
+		int k = 0, //caches the position of the last particle of the lower subinterval
+			j;
+		
+		for(int i = 0; i < *count; i++) {	
+			j = k;
+			while(j < len && data[j] < (i + 1) * length / (*count)) { j++; }
+			
+			(*result)[i] = j - k;
+			k = j;
+		}
+	}
+}
+
+	
 	return 0;
+}
+
+static PyObject* buildNumpyArray(int length, int type, void** array) {
+	//generate numpy-array
+	//as python cannot handle c-arrays, it needs to be converted into
+	//an object python can handle. numpy has the advantage, that the
+	//c-array dont needs to be extracted into a list (which would mean iterating over
+	//each element) and an option exists that numpy releases the memory
+	//when its no longer needed
+	int nd = 1; //1 dimensional
+	npy_intp dims[nd];
+	dims[0] = length;//length of the dimension
+	
+	//create numpy array.
+	//first argument is firm, number of array-dimensions, length of each array-dimension, data-type, NULL, the array to convert, 0, c-array / it can be written, NULL
+	PyObject* numpylist = PyArray_New(&PyArray_Type, nd, dims, type, NULL, (*array), 0, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_WRITEABLE, NULL);
+	
+	if( numpylist == NULL ) {
+		return NULL;
+	}
+	//mark the array as owned, so the memory is released after its no longer needed
+	PyArray_ENABLEFLAGS(numpylist, NPY_ARRAY_OWNDATA);
+	
+	return numpylist;
 }
 
 /*
@@ -110,9 +174,14 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	//the parameters and their defaults are set
 	char* filename;
 	int serial = 1000;
-	double length = 2 * M_PI;
+	double length = -1;//tell with negativ value to use max/min value and use count steps between
 	int count = 1000;
 	int return_code;
+	double* array;//array containing the file-content
+	int lines;//number of file-entries
+	int* result;//array containing the histogramm
+	double* x;//to result corresponding x-values
+	double intervalStart = 0; //Offset, if the intervals that the particles are inserted to should not start with zero
 	
 	//arguments parsed. if an error occurred, an exception is already
 	//thrown, and NULL is returned
@@ -123,8 +192,6 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	}
 
 	//defines the array which will contain the positions of the particles
-	double* array;
-	int lines;
 	//reads the data from the given file and stores it in the array
 	//return NULL if an error occurred, an exception is already thrown
 	//in this case
@@ -142,31 +209,22 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	//counts the number of particles which belong in each subinterval,
 	//stores the result in array result
 	printf("Seperating\n");
-	int* result;
-	insertInIntervals(array, lines, length, count, &result);
+	insertInIntervals(array, lines, length, intervalStart, &count, &result, &x);
 	free(array); //position data of the particles are no longer needed
 	
-	//generate numpy-array
-	//as python cannot handle c-arrays, it needs to be converted into
-	//an object python can handle. numpy has the advantage, that the
-	//c-array dont needs to be extracted into a list (so iterating over
-	//each element) and an option exists that numpy releases the memory
-	//when its no longer needed
-	int nd = 1; //1 dimensional
-	npy_intp dims[nd];
-	dims[0] = count;//length of the dimension
+	PyObject* yValues = buildNumpyArray(count, NPY_INT, (void**) &result);
+	PyObject* xValues = buildNumpyArray(count, NPY_DOUBLE, (void**) &x);
+	PyObject* retList = PyList_New(2);
 	
-	//create numpy array.
-	//first argument is firm, number of array-dimensions, length of each array-dimension, data-type, NULL, the array to convert, 0, c-array / it can be written, NULL
-	PyObject* numpylist = PyArray_New(&PyArray_Type, nd, dims, NPY_INT, NULL, result, 0, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_WRITEABLE, NULL);
-	
-	if( numpylist == NULL ) {
+	if(retList == NULL) {
+		PyErr_SetString(PyExc_RuntimeError, "Could not create returning list!");
 		return NULL;
 	}
-	//mark the array as owned, so the memory is released after its no longer needed
-	PyArray_ENABLEFLAGS(numpylist, NPY_ARRAY_OWNDATA);
 	
-	return numpylist;
+	PyList_SET_ITEM(retList, 0, xValues);
+	PyList_SET_ITEM(retList, 1, yValues);
+	
+	return retList;
 }
 //array of structs of information of each funtion callable of the interpreter.
 static struct PyMethodDef PyInit_process_distribution_methods[] = {{
