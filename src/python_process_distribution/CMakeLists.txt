@@ -19,9 +19,8 @@ list(APPEND EXTRA_COMPILE_ARGS "-std=c11")
 ###############
 
 #collect the files which are needed to build the library
-set(FILES)
-file(GLOB FILES "(*.c | *.py)")
-file(GLOB COMPILE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
+file(GLOB FILES "*.[hc]")
+file(GLOB COMPILE_FILES "*.[c]")
 
 #################
 # Find Python
@@ -79,11 +78,24 @@ string(REGEX REPLACE "^[ ]*," "" COMPILE_LIST "${COMPILE_LIST}")
 #and source-files
 set(COMPILE_FILE_LIST)
 foreach(I IN LISTS COMPILE_FILES)
+	string(REGEX REPLACE "^.*/" "" I "${I}")
 	set(COMPILE_FILE_LIST "${COMPILE_FILE_LIST}, '${I}'")
 endforeach()
 string(REGEX REPLACE "^[ ]*," "" COMPILE_FILE_LIST "${COMPILE_FILE_LIST}")
 
 configure_file("setup.py.cfg" "setup.py") #replace the variables
+
+###########
+# Copy files to build-dir
+###########
+#neccessary due to relative paths
+
+message(${FILES})
+
+foreach(I IN LISTS FILES)
+	message(${I})
+	configure_file( ${I} ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+endforeach()
 
 ###########
 # Build (via python skript)
