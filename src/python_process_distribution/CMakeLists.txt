@@ -104,7 +104,7 @@ endforeach()
 #custom target. call the python-skript and something arround
 add_custom_target(process_distribution ALL 
 	find . -name build -exec rm -r {} + #clean a prior build if its exists
-	COMMAND ${PYTHON_EXECUTABLE} setup.py build DEPENDS ${FILES} #build the project via calling the python-skript
+	COMMAND ${PYTHON_EXECUTABLE} setup.py -q build DEPENDS ${FILES} #build the project via calling the python-skript, -q -> quiet output
 #copy the resulting .so-file upwards into the root-directory of the main-project
 	COMMAND find ${CMAKE_CURRENT_BINARY_DIR} -name *.so -exec cp {} ` dirname " ${CMAKE_CURRENT_BINARY_DIR} " `   ""  "\;" 
 	)
