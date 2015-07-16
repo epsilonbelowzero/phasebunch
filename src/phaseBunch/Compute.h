@@ -87,6 +87,7 @@ void compute(
     
     //create file
     file = H5Fcreate ("result.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);    
+    
     //create data-space w/o dimension-limit
     dataspace = H5Screate_simple (RANK, dim, maxdim);
 
@@ -95,10 +96,10 @@ void compute(
     H5Pset_chunk (prop, RANK, dim);
     /* Create a new dataset within the file using chunk 
        creation properties.  */
-    dataset = H5Dcreate2 (file, "signal", H5T_NATIVE_DOUBLE, dataspace,
+    dataset = H5Dcreate2 (file, "signal", H5T_NATIVE_LDOUBLE, dataspace,
                          H5P_DEFAULT, prop, H5P_DEFAULT);
 	
-	double *tmp; tmp = (double*) malloc(len * sizeof(double));
+	long double *tmp; tmp = (long double*) malloc(len * sizeof(long double));
     long double t;
     long double h = 1 / ((*freq) * dt);
     for( t = t_start,j = 1; t < t_end - dt; t += dt) {
@@ -129,11 +130,11 @@ void compute(
 
 			#pragma omp parallel for default(none) private(i) shared(tmp, freq, t, px, m, x, len)
 			for(i = 0; i < len; i++) {
-				tmp[i] = (double) (2 * M_PI / (*freq) * t + computeGamma(px[i], m[i]) * x[i] / computeVi(px[i], computeGamma(px[i], m[i]), m[i]));
+				tmp[i] = (2 * M_PI / (*freq) * t + computeGamma(px[i], m[i]) * x[i] / computeVi(px[i], computeGamma(px[i], m[i]), m[i]));
 			}
 
 			/* Write the data to the extended portion of dataset  */
-			H5Dwrite (dataset, H5T_NATIVE_DOUBLE, memspace, filespace,
+			H5Dwrite (dataset, H5T_NATIVE_LDOUBLE, memspace, filespace,
 							   H5P_DEFAULT, tmp);
 						
 			
@@ -152,6 +153,11 @@ void compute(
     H5Pclose (prop);
     printf("dataspace\n");
     H5Sclose (dataspace);
+    
+    
+    size[0] = 3; long double turns[] = { (long double) j - 1, (long double) len, dt };
+    H5LTmake_dataset(file,"/params",1,size,H5T_NATIVE_LDOUBLE,turns);
+    
     printf("file\n");
     H5Fclose (file);
 
