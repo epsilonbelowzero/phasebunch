@@ -99,14 +99,10 @@ endforeach()
 ###########
 
 file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/build") #remove pror build if its exists
+string(REGEX REPLACE "^(.*)/.*" "\\1" TARGET "${CMAKE_CURRENT_BINARY_DIR}") #set target-path
 #custom target. call the python-skript and something arround
 add_custom_target(process_distribution ALL 
 	COMMAND ${PYTHON_EXECUTABLE} setup.py -q build
+	COMMAND find . -name "*.so" -exec mv {} ${TARGET} "\;"  #copy to build-dir
 	DEPENDS ${FILES} #build the project via calling the python-skript, -q -> quiet output
 )
-##copy the resulting .so-file upwards into the root-directory of the main-project
-file(GLOB_RECURSE LIB "*.so") #find lib
-if( ${LIB} )
-	string(REGEX REPLACE "^(.*)/.*" "\\1" TARGET "${CMAKE_CURRENT_BINARY_DIR}") #set target-path
-	configure_file( ${LIB} ${TARGET} COPYONLY) #copy
-endif()
