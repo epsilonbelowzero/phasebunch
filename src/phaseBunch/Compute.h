@@ -111,7 +111,7 @@ void compute(
         for(i = 0; i < len; i++) {
 			updateParticle(t, dt, &(x[i]), &(px[i]), q[i], m[i]);
         }
-		printf("particle 1: x = %Le\n", x[0]);
+		//printf("particle 1: x = %Le\n", x[0]);
         
         //check, whether sync-particle passed the detector
         if( t * beamspeed > j * circumference ) {
@@ -132,10 +132,12 @@ void compute(
 			/* Define memory space */
 			memspace = H5Screate_simple (RANK, dim, NULL);
 
-			#pragma omp parallel for default(none) private(i) shared(tmp, freq, t, px, m, x, len)
+			#pragma omp parallel for default(none) private(i) shared(tmp, t, px, m, x, len)
 			for(i = 0; i < len; i++) {
-				tmp[i] = 2 * M_PI / (*freq) * t + computeGamma(px[i], m[i]) * x[i] * m[i] / (px[i] * SOL);
+				tmp[i] = t + computeGamma(px[i], m[i]) * x[i] * m[i] / (px[i] * SOL);
 			}
+
+            printf("t1 = %Lf vs %Lf\tt2 = %Lf\n", 1 / (*freq) * j, t, computeGamma(px[0], m[0]) * x [0] * m[0] / px[0] / SOL);
 
 			/* Write the data to the extended portion of dataset  */
 			H5Dwrite (dataset, H5T_NATIVE_LDOUBLE, memspace, filespace,
