@@ -26,7 +26,7 @@ typedef struct part{
 } particle;
 
 inline long double computeVelocity(long double amplitude, long double circularFrequency) {
-	return amplitude * circularFrequency; //From x = A * cos(omega * t) -> x' = A * omega * cos(omega * t), for starting velocity: t==0
+	return amplitude * circularFrequency; //From x = A * sin(omega * t) -> x' = A * omega * cos(omega * t), for starting velocity: t==0
 }
 inline long double computeFactor(long double velocity) { //from c*p = m0 * gamma * v * c or cp [eV] = E0 [eV] * gamma * beta
 	return 1 / sqrt(1 - (velocity*velocity)/(SOL*SOL)) / SOL * velocity;
