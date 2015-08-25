@@ -24,7 +24,7 @@
  */
 static int parse_args(PyObject *args, char** filename, int* serial, double* interval_length, int *interval_count)
 {
-    if (!PyArg_ParseTuple(args, "s|idi", filename, &serial, &interval_length, &interval_count)) {
+    if (!PyArg_ParseTuple(args, "s|idi", filename, interval_count, serial, interval_length)) {
         PyErr_SetString(PyExc_ValueError, "Couldn't parse arguments.");
         return -1;
 	}
@@ -106,11 +106,14 @@ static int insertInIntervals(double* data, int len, double length, double interv
 		}
 		else {
 			length = (data[len - 1] - data[0]) / (*count - 2);
+			
+			printf("%lf - %lf / (%i - 2) = %lf\n", data[len - 1], data[0], *count, length);
 		}
 	}
 	
 	*result = (int*) malloc(sizeof(int) * (*count));
 	*x = (double*) malloc(sizeof(double) * (*count));
+	intervalStart = data[0] - length;
 	
 #pragma omp parallel sections
 {
@@ -118,7 +121,7 @@ static int insertInIntervals(double* data, int len, double length, double interv
 	#pragma omp section
 	{
 		for(int i = 0; i < *count; i++) {
-			(*x)[i] = length / (*count) * i + intervalStart;
+			(*x)[i] = length * i + intervalStart;
 		}
 	}
 	
@@ -129,7 +132,7 @@ static int insertInIntervals(double* data, int len, double length, double interv
 		
 		for(int i = 0; i < *count; i++) {	
 			j = k;
-			while(j < len && data[j] < (i + 1) * length / (*count)) { j++; }
+			while(j < len && data[j] < (i + 1) * length + intervalStart) { j++; }
 			
 			(*result)[i] = j - k;
 			k = j;
@@ -190,6 +193,8 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	if( return_code < 0 ) {
 		return NULL;
 	}
+	
+	printf("%i intervalls\n", count);
 
 	//defines the array which will contain the positions of the particles
 	//reads the data from the given file and stores it in the array
