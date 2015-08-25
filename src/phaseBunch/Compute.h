@@ -74,7 +74,7 @@ void compute(
     int i,j;
     
     //for memory-reasons, whenever the particle-positions are to be
-    //stored, they are directly writtin into the resultant file.
+    //stored, they are directly written into the resulting file.
     //So - a lot of hdf5-stuff to do here
 	hsize_t dim[1] = { (long long unsigned int) len }; //length of a chunk, which is the number of particles
 	hsize_t maxdim[1] = {H5S_UNLIMITED};
