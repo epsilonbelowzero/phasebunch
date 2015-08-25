@@ -18,29 +18,29 @@
 #define SOL 299792458
 #endif
 
-long double computeGamma(long double px, long double m) {
+inline long double computeGamma(long double px, long double m) {
     return sqrtl(1 + (px*px) / (m*m));//changed from - to + as E^2 = E0^2 + (pc)^2 and E = gamma * E0
 }
 
-long double computeVi(long double pi, long double gamma, long double m) {
+inline long double computeVi(long double pi, long double gamma, long double m) {
     //v_i = p_i * c / (gamma * m)
     return pi / (gamma * m);//removed product with SOL as px stores energy, not energy over c TODO: check this
 }
 
 
 void computeLorentz( long double q, long double x, long double *F, long double t) {
-    *F = abs(q) *  Ex(x, t);
+    *F = q *  Ex(x, t);
 }
 
-void computeNewImpulse( long double dt, long double *px, long double F ) {
+void computeNewImpulse( long double dt, long double *px, long double F, long double gamma) {
     //old computation of new momentum: no energy conservation (magnetic field also accelerates)
-    *px = *px + 3e8 * F * dt;
+    *px = *px + 3e8 * F * dt * gamma;
 }
 
 long double computeNewPosition(
     long double dt, long double *x, long double px, long double F, long double gamma, long double m
 ) {
-    *x += SOL * px / ( gamma * m ) * dt + 1.0 / 2.0 * dt*dt * F * SOL * SOL / ( gamma * m );
+    *x = *x + SOL * px / ( gamma * m ) * dt + 1.0 / 2.0 * dt*dt * F * SOL * SOL / ( gamma * m );
 }
 
 void updateParticle(
@@ -52,10 +52,13 @@ void updateParticle(
     long double gamma,vx,F;
 
     gamma = computeGamma(*px, m);
+    //~ printf("gamma - 1 = %Le\n", gamma - 1);
     computeLorentz(q, *x, &F, t);
+    
+    //~ printf("F = %Le\n", F);
 
     computeNewPosition(dt, x, *px, F, gamma, m);
-    computeNewImpulse(dt, px, F);
+    computeNewImpulse(dt, px, F, gamma);
     
 }
 
@@ -108,6 +111,7 @@ void compute(
         for(i = 0; i < len; i++) {
 			updateParticle(t, dt, &(x[i]), &(px[i]), q[i], m[i]);
         }
+		printf("particle 1: x = %Le\n", x[0]);
         
         //check, whether sync-particle passed the detector
         if( t * beamspeed > j * circumference ) {
@@ -130,7 +134,7 @@ void compute(
 
 			#pragma omp parallel for default(none) private(i) shared(tmp, freq, t, px, m, x, len)
 			for(i = 0; i < len; i++) {
-				tmp[i] = (2 * M_PI / (*freq) * t + computeGamma(px[i], m[i]) * x[i] / computeVi(px[i], computeGamma(px[i], m[i]), m[i]));
+				tmp[i] = 2 * M_PI / (*freq) * t + computeGamma(px[i], m[i]) * x[i] * m[i] / (px[i] * SOL);
 			}
 
 			/* Write the data to the extended portion of dataset  */
@@ -147,18 +151,14 @@ void compute(
     }
     
     /* Close resources */
-    printf("dataset\n");
     H5Dclose (dataset);
-    printf("prop\n");
     H5Pclose (prop);
-    printf("dataspace\n");
     H5Sclose (dataspace);
     
     
     size[0] = 3; long double turns[] = { (long double) j - 1, (long double) len, dt };
     H5LTmake_dataset(file,"/params",1,size,H5T_NATIVE_LDOUBLE,turns);
     
-    printf("file\n");
     H5Fclose (file);
 
 	printf("j = %i\n", j);

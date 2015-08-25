@@ -25,11 +25,11 @@ typedef struct part{
 
 } particle;
 
-inline double computeVelocity(double amplitude, double circularFrequency) {
+inline long double computeVelocity(long double amplitude, long double circularFrequency) {
 	return amplitude * circularFrequency; //From x = A * cos(omega * t) -> x' = A * omega * cos(omega * t), for starting velocity: t==0
 }
-inline double computeFactor(double velocity) { //from c*p = gamma * beta * E0
-	return velocity/SOL * 1/sqrt(1 - (velocity*velocity)/(SOL*SOL));
+inline long double computeFactor(long double velocity) { //from c*p = m0 * gamma * v * c or cp [eV] = E0 [eV] * gamma * beta
+	return 1 / sqrt(1 - (velocity*velocity)/(SOL*SOL)) / SOL * velocity;
 }
 
 void init(	long double* t_start, long double *t_end, long double *dt,
@@ -51,10 +51,10 @@ void init(	long double* t_start, long double *t_end, long double *dt,
     *beamspeed = 0.467 * SOL;
     *circumference = 108.5;//m
 
-	double amplitude = 5;//unit: meter
-    *freq = 1e6;//unit: hearts
-    const double omega = 2 * M_PI * (*freq);
-    const double deltaOmega = 2 * M_PI * 1e5 * 0;
+	const long double amplitude = 5;//unit: meter
+    *freq = 1e2;//unit: hearts
+    const long double omega = 2 * M_PI * (*freq);
+    const long double deltaOmega = 2 * M_PI * 1e5;
 
     //generator: generates random numbers, initialising using a seed (unix time)
     unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -84,11 +84,14 @@ void init(	long double* t_start, long double *t_end, long double *dt,
     //initialise each parameter for each particle
     for(i=0; i < (*length); i++) {
 		p->x[i]  = position(generator);//in m
-        p->q[i] = 1;//in number of the elementary charge
+        p->q[i] = -1;//in number of the elementary charge
         p->m[i] = 0.5e6;//in eV
         p->px[i] = computeFactor(computeVelocity(amplitude, circularFrequency(generator))) * p->m[i];
         
     }
+    
+    printf("paricel 1: x = %Le\n", p->x[0]);
+    printf("paricel 1: p = %Le\n", p->px[0]);
     
     double *tmp;
     tmp = (double*) malloc(sizeof(double) * (*length));
