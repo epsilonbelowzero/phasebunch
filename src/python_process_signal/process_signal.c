@@ -13,6 +13,8 @@
 
 #include <math.h>
 
+#include <omp.h>
+
 #include "parallel_quicksort.h"
 
 //Doc: https://docs.python.org/3.1/c-api/structures.html#PyMethodDef
@@ -51,9 +53,7 @@ static int readFile(char** filename, long double** params, long double **array, 
     hid_t dataset, filespace, memspace;
     hid_t prop;
     int dataDim;//dataDim - dimension of data, i.e. 1-dim (array), 2-dim (2d-array), ...
-    //~ int d1[1];
     hsize_t dims[1];
-    //~ herr_t status;
 
 	if( access(*filename, F_OK) ) {
 		PyErr_SetString(PyExc_FileNotFoundError, "File not found");
@@ -73,7 +73,7 @@ static int readFile(char** filename, long double** params, long double **array, 
 
 	dataset = H5Dopen2 (file, "/params", H5P_DEFAULT);
 #warning "Fixed params-size in hdf5-file!"
-	*params = (long double*) malloc(sizeof(long double) * 3);
+	*params = (long double*) malloc(sizeof(long double) * 6);
 	H5Dread(dataset, H5T_NATIVE_LDOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, 
                     *params);
     H5Dclose(dataset);                
@@ -88,8 +88,6 @@ static int readFile(char** filename, long double** params, long double **array, 
 	if (H5D_CHUNKED == H5Pget_layout (prop)) {
 		hsize_t chunk_dimsr[dataDim];
 		int rank_chunk = H5Pget_chunk (prop, dataDim, chunk_dimsr);
-		printf("rank-chunk = %i (courious, what it is :D)\n", rank_chunk);
-		printf("chunk_dmsr = %Ld (courious, what it is :D)\n", chunk_dimsr[0]);
     }
 
 	memspace = H5Screate_simple (dataDim, dims, NULL);
@@ -112,34 +110,62 @@ static int readFile(char** filename, long double** params, long double **array, 
     return 0;
 }
 
-//this function is called for each detector-pass! (doing in main-routine)
-static int insertInIntervals(long double* data, int len, long double dt, int* result, long double* x) {
-	
-	//~ printf("x = %i\n", x);
-	
-	if( data[len - 1] == data[0] ) { //all entries are equal
-		
-		x[1] = data[0];
-		result[1] = len;
-		return 0;
-	}
-	
-	int k = 0, //caches the position of the last particle of the lower subinterval
-		j, i = 0;
-	long double timestep = timestep = floorl(data[0] / dt);
-	
-	while(j < len) {
-		j = k;
-		while(j < len && data[j] < dt * (timestep + 1)) { j++; }
-		
-		result[i] = j - k;
-		x[i] = timestep * dt;
-		k = j;
-		timestep += dt;
-		i++;
-	}
-	
-	return 0;
+static int inserting(long double *params, long double **array, int** y, long double** x, int* size, int lines)
+{
+    int offset = (int) ((params[0] + 1) * params[5] * 1e9);
+    printf("Mem alloc: %Lu Bytes\n", (long long unsigned int) (offset * sizeof(int) * omp_get_max_threads()));
+    
+    if(offset * sizeof(int) * omp_get_max_threads() >= 1024L*1024L*1024L*2L) {
+       PyErr_SetString(PyExc_MemoryError, "More than 2 GB would be allocated!");
+       return -1;
+    }
+
+    *y = (int*) malloc(offset * sizeof(int));
+    for(int i = 0; i < offset; i++) {
+        (*y)[i] = 0;
+    }
+    int* y_t;
+
+#pragma omp parallel
+    {
+    const int maxThreads = omp_get_num_threads();
+    const int nThread = omp_get_thread_num();
+
+    #pragma omp single
+    y_t = (int*) malloc(maxThreads * offset * sizeof(int));
+    
+    for(int i = 0; i < offset; i++) {
+        y_t[offset * nThread + i] = 0;
+    }
+
+    #pragma omp for
+        for(int i = 0; i < lines; i++) {
+            y_t[(int) (floorl(fabsl((*array)[i]) * 1e9) + offset * nThread)] += 1;
+        }
+
+    #pragma omp for
+        for(int i = 0; i < offset; i++) {
+            for(int j = 0; j < maxThreads; j++) {
+                if( y_t[i + offset * j] != 0)
+                (*y)[i] += y_t[i + offset * j];
+            }
+        }
+    }
+    free(y_t);
+
+    //~ int i = offset - 1;
+    //~ for( i = offset - 1; y[i] == 0; i-- ) {}
+    *size = offset;
+    *y = (int*) realloc(*y, sizeof(int) * (*size));
+    
+    *x = (long double*) malloc(sizeof(long double) * (*size));
+    int k;
+#pragma omp parallel for default(none) shared(x, size, params) private(k)
+    for( k = 0; k < *size; k += 1) {
+        (*x)[k] = k * params[2];
+    }
+    
+    return 0;
 }
 
 	//generate numpy-array
@@ -198,44 +224,22 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	return_code = readFile(&filename, &params, &array, &lines);
 	if( return_code < 0) {
 		return NULL;
-	}
-	
-	//sorts the array. serial is a treshold where no longer is
-	//recursive but iterative sorted
-	printf("Sorting\n");
-	quick_sort(array, lines, serial);
-	
-	//counts the number of particles which belong in each subinterval,
-	//stores the result in array result
-	printf("Seperating\n");
-	
-	int yLen = 0;
-	int yLens[(long) params[0]];
-	printf("params[0] = %i\n", (int) params[0]);
-	for(int i = 0; i < (int) params[0]; i++) { //params[0]: number of turns
-		yLen += (int) floorl( (array[(long) ((i + 1)*params[1] - 1)] - array[(long) (i * params[1])]) / params[2] + 1);
-		yLens[i] =  yLen - 1;//params[1]: number of particles
-		printf("yLen = %i, yLen - 1 = %Lf\n", (int) floorl( (array[(long) ((i + 1)*params[1] - 1)] - array[(long) (i * params[1])]) / params[2] + 1), (array[(long) ((i + 1)*params[1] - 1)] - array[(long) (i * params[1])]));
-	}
-	
-	printf("yLen = %i\n", yLen);
-	printf("dt = %#Le\n", params[2]);
-	
-	x = (long double*) malloc(sizeof(long double) * yLen);
-	y = (int*) malloc(sizeof(int) * yLen);
-	
-	for(int i = 0; i < params[0]; i++) {
-		insertInIntervals(&(array[(long) (i*params[1])]), params[1], params[2], &(y[yLens[i]]), &(x[yLens[i]]));
-		//~ printf("%i, %i, %i, %i\n", x, &(x[0]), &(x[yLens[i]]), yLens[i]);
-	}	
-	
-	free(array); //position data of the particles are no longer needed
+    }
+
+    printf("Seperating...\n");
+    
+    int size;
+    return_code = inserting(params, &array, &y, &x, &size, lines);
+    if( return_code < 0) {
+        return NULL;
+    }
 	free(params);
+    free(array);
 		
-	PyObject* yValues = buildNumpyArray(yLen, NPY_INT, (void**) &y);
-	PyObject* xValues = buildNumpyArray(yLen, NPY_LONGDOUBLE, (void**) &x);
+	PyObject* yValues = buildNumpyArray(size, NPY_INT, (void**) &y);
+	PyObject* xValues = buildNumpyArray(size, NPY_LONGDOUBLE, (void**) &x);
 	PyObject* retList = PyList_New(2);
-	
+
 	if(retList == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "Could not create returning list!");
 		return NULL;
@@ -243,7 +247,7 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	
 	PyList_SET_ITEM(retList, 0, xValues);
 	PyList_SET_ITEM(retList, 1, yValues);
-	
+
 	return retList;
 }
 //array of structs of information of each funtion callable of the interpreter.

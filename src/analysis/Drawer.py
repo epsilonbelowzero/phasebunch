@@ -12,8 +12,7 @@ if len(sys.argv) < 2:
 	print("You forgot the file!")
 	sys.exit(1)
 
-x,y = process_signal.process(sys.argv[1])	
-print(x)
+x,y = process_signal.process(sys.argv[1])
 
 fig = plt.figure()
 
