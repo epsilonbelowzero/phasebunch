@@ -52,7 +52,6 @@ void updateParticle(
     long double gamma,vx,F;
 
     gamma = computeGamma(*px, m);
-    //~ printf("gamma - 1 = %Le\n", gamma - 1);
     computeLorentz(q, *x, &F, t);
     
     //~ printf("F = %Le\n", F);
@@ -107,7 +106,7 @@ void compute(
     long double h = 1 / ((*freq) * dt);
     for( t = t_start,j = 1; t < t_end - dt; t += dt) {
 
-#pragma omp parallel for default(none) private(i) shared(len, x, px, dt, m, q, t)
+#pragma omp parallel for default(none) private(i) shared(len, x, px, dt, m, q, t, beamspeed)
         for(i = 0; i < len; i++) {
 			updateParticle(t, dt, &(x[i]), &(px[i]), q[i], m[i]);
         }
@@ -132,12 +131,14 @@ void compute(
 			/* Define memory space */
 			memspace = H5Screate_simple (RANK, dim, NULL);
 
-			#pragma omp parallel for default(none) private(i) shared(tmp, t, px, m, x, len)
+			#pragma omp parallel for default(none) private(i) shared(tmp, t, px, m, x, len, beamspeed)
 			for(i = 0; i < len; i++) {
-				tmp[i] = t + computeGamma(px[i], m[i]) * x[i] * m[i] / (px[i] * SOL);
+				tmp[i] = t + x[i] / beamspeed;
 			}
 
-            printf("t1 = %Lf vs %Lf\tt2 = %Lf\n", 1 / (*freq) * j, t, computeGamma(px[0], m[0]) * x [0] * m[0] / px[0] / SOL);
+            printf("x[0] = %Le\tpx[0] = %Le\tt = %Le\n", x[0], px[0], tmp[0]);
+            printf("gamma = %Le\n", computeGamma(px[0], m[0]));
+            printf("2.Summand = %Le\n", computeGamma(px[i], m[i]) * x[i] * m[i] / px[i] / SOL);
 
 			/* Write the data to the extended portion of dataset  */
 			H5Dwrite (dataset, H5T_NATIVE_LDOUBLE, memspace, filespace,
@@ -158,7 +159,7 @@ void compute(
     H5Sclose (dataspace);
     
     
-    size[0] = 3; long double turns[] = { (long double) j - 1, (long double) len, dt };
+    size[0] = 6; long double turns[] = { (long double) j - 1, (long double) len, dt , t_start, t_end, circumference / beamspeed};
     H5LTmake_dataset(file,"/params",1,size,H5T_NATIVE_LDOUBLE,turns);
     
     H5Fclose (file);
