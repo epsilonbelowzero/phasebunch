@@ -85,10 +85,6 @@ static int readFile(char** filename, long double** params, long double **array, 
 	*lines = (int) dims[0];
 	
 	prop = H5Dget_create_plist (dataset);
-	if (H5D_CHUNKED == H5Pget_layout (prop)) {
-		hsize_t chunk_dimsr[dataDim];
-		int rank_chunk = H5Pget_chunk (prop, dataDim, chunk_dimsr);
-    }
 
 	memspace = H5Screate_simple (dataDim, dims, NULL);
 	*array = (long double*) malloc(sizeof(long double) * (*lines));
@@ -112,6 +108,7 @@ static int readFile(char** filename, long double** params, long double **array, 
 
 static int inserting(long double *params, long double **array, int** y, long double** x, int* size, int lines)
 {
+#warning "Fixed Time-Step size!!!"
     int offset = (int) ((params[0] + 1) * params[5] * 1e9);
     printf("Mem alloc: %Lu Bytes\n", (long long unsigned int) (offset * sizeof(int) * omp_get_max_threads()));
     
@@ -146,7 +143,6 @@ static int inserting(long double *params, long double **array, int** y, long dou
     #pragma omp for
         for(int i = 0; i < offset; i++) {
             for(int j = 0; j < maxThreads; j++) {
-                if( y_t[i + offset * j] != 0)
                 (*y)[i] += y_t[i + offset * j];
             }
         }
@@ -187,7 +183,7 @@ static PyObject* buildNumpyArray(int length, int type, void** array) {
 		return NULL;
 	}
 	//mark the array as owned, so the memory is released after its no longer needed
-	PyArray_ENABLEFLAGS(numpylist, NPY_ARRAY_OWNDATA);
+	//~ PyArray_ENABLEFLAGS(numpylist, NPY_ARRAY_OWNDATA);
 	
 	return numpylist;
 }

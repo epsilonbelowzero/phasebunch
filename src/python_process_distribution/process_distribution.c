@@ -163,7 +163,7 @@ static PyObject* buildNumpyArray(int length, int type, void** array) {
 		return NULL;
 	}
 	//mark the array as owned, so the memory is released after its no longer needed
-	PyArray_ENABLEFLAGS(numpylist, NPY_ARRAY_OWNDATA);
+	//~ PyArray_ENABLEFLAGS(numpylist, NPY_ARRAY_OWNDATA);
 	
 	return numpylist;
 }
