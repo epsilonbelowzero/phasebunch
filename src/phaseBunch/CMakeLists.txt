@@ -66,7 +66,7 @@ file(GLOB_RECURSE SRC_FILES "*.cpp")
 
 add_executable(phaseBunch ${SRC_FILES})
 
-target_link_libraries(phaseBunch ${OpenMP_CXX_FLAGS} ${LIBS} ) #${MPI_Libraries}
+target_link_libraries(phaseBunch ${OpenMP_CXX_FLAGS} ${LIBS} ${MPI_Libraries})
 
 if(UNIX)
 	target_link_libraries(phaseBunch m)
