@@ -35,7 +35,7 @@ void init(	long double* t_start, long double *t_end, long double *dt,
     int i;
 
     //initialise length (from array length): number of particles
-    *length = 1e0;
+    *length = 1e3;
     
     *t_start = 0;//in seconds
     *t_end   = 1e-6;//in seconds
@@ -97,7 +97,9 @@ void init(	long double* t_start, long double *t_end, long double *dt,
     tmp[0] = (*dt);  tmp[1] = (double) *freq; 
     H5LTmake_dataset(file_id,"/params",1,dims,H5T_NATIVE_DOUBLE,tmp);
     H5Fclose(file_id);
-	free(tmp);
+	
+    
+    free(tmp);
 }
 
 

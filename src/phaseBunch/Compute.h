@@ -108,7 +108,7 @@ void compute(
         for(i = 0; i < len; i++) {
 			updateParticle(dt, &(x[i]), &(px[i]), q[i], m[i]);
         }
-		printf("%Le\n", x[0]);
+	//	printf("%Le\n", x[0]);
         
         //check, whether sync-particle passed the detector
         if( t * beamspeed > j * circumference ) {
