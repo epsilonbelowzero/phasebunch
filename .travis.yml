@@ -15,9 +15,9 @@ before_script:
   - sudo apt-get install -qq -y cmake-data cmake
   - sudo apt-get install -qq build-essential
   - sudo apt-get install libhdf5-mpi-dev
+  - sudo apt-get install python3-all-dev
   - sudo apt-get install python3.4
   - sudo apt-get install python-numpy
-  - sudo apt-get install python3-all-dev
   - sudo apt-get install g++-4.9
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
   - gcc --version && g++ --version
