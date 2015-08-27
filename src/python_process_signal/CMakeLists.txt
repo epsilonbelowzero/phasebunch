@@ -28,14 +28,16 @@ file(GLOB COMPILE_FILES "*.[c]")
 
 #check for python-interpreter and the Python.h-file, as its cannot be
 #build w/o them
-find_package(PythonLibs 3)
-find_package(PythonInterp 3)
+find_package(PythonLibs 3 REQUIRED)
+find_package(PythonInterp 3 REQUIRED)
+
+include_directories({$PYTHON_INCLUDE_DIRS})
 
 ################
 #Find HDF5 components
 ###############
 
-find_package(HDF5 COMPONENTS HL)
+find_package(HDF5 COMPONENTS HL REQUIRED)
 
 ##########
 #Find OpenMP

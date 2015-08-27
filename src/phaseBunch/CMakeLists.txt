@@ -46,9 +46,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 ##########
 #Find OpenMPI
 ##########
-find_package(MPI)
+find_package(MPI REQUIRED)
 set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}  ${MPI_COMPILE_FLAGS})
-include_directories(${MPI_INCLUDE_PATH})
+include_directories(${MPI_CXX_INCLUDE_PATH})
+include_directories(${MPI_C_INCLUDE_PATH})
 
 #########
 #Find HDF5 components
@@ -66,7 +67,7 @@ file(GLOB_RECURSE SRC_FILES "*.cpp")
 
 add_executable(phaseBunch ${SRC_FILES})
 
-target_link_libraries(phaseBunch ${OpenMP_CXX_FLAGS} ${LIBS} ${MPI_Libraries})
+target_link_libraries(phaseBunch ${OpenMP_CXX_FLAGS} ${LIBS} ${MPI_CXX_LIBRARIES} ${MPI_C_LIBRARIES})
 
 if(UNIX)
 	target_link_libraries(phaseBunch m)
