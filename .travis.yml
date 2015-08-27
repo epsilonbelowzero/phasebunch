@@ -8,7 +8,7 @@ script:
 
 before_script:
   - sudo add-apt-repository --yes ppa:smspillaz/cmake-2.8.12
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+  - sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -qq
   - sudo apt-get install -qq -y cmake-data cmake
   - sudo apt-get install -qq build-essential
