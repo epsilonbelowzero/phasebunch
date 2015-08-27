@@ -29,7 +29,7 @@ inline long double computeVi(long double pi, long double gamma, long double m) {
 
 
 void computeLorentz( long double q, long double x, long double *F, long double t) {
-    *F = q *  Ex(x, t);
+    *F = k*x;
 }
 
 void computeNewImpulse( long double dt, long double *px, long double F, long double gamma) {
