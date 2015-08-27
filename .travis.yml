@@ -7,7 +7,7 @@ script:
   - ./configure.sh
 
 before_script:
-  - sudo add-apt-repository --yes ppa:smspillaz/cmake-2.8.12
+  - sudo add-apt-repository --yes ppa:smspillaz/cmake-3.2
   - sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -qq
   - sudo apt-get install -qq -y cmake-data cmake
