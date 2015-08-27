@@ -104,7 +104,7 @@ file(REMOVE_RECURSE "${CMAKE_CURRENT_BINARY_DIR}/build") #remove pror build if i
 string(REGEX REPLACE "^(.*)/.*" "\\1" TARGET "${CMAKE_CURRENT_BINARY_DIR}") #set target-path
 #custom target. call the python-skript and something arround
 add_custom_target(process_signal ALL 
-	COMMAND ${PYTHON_EXECUTABLE} setup.py -q build
+	COMMAND ${PYTHON_EXECUTABLE} setup.py build
 	COMMAND find . -name "*.so" -exec mv {} ${TARGET} "\;"  #copy to build-dir
 	DEPENDS ${FILES} #build the project via calling the python-skript, -q -> quiet output
 )
