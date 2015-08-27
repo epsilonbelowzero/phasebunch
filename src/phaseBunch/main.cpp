@@ -6,7 +6,7 @@
 #include "Compute.h"
 #include "Params.h"
 
-int main(int argc, char** argv) {
+int main() {
 
 //    printf("Using %i Threads\n", omp_get_num_procs());
     printf("Initialising...\n");
@@ -30,8 +30,7 @@ int main(int argc, char** argv) {
         p.x, p.px,
         p.m,p.q, len,
         &k,
-        beamspeed, circumference,
-	&freq);
+        beamspeed, circumference);
 
     destruct(p);
 

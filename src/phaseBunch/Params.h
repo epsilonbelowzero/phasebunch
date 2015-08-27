@@ -6,9 +6,9 @@
 //k = omega² * m / q
 //for 100 Hz, electron charge and mass k = 1.400967e13, [k] = V / (m^2)
 
-inline long double Ex(long double x,long double t){
+inline long double Ex(long double x){
     
-    return 3.59624*x;
+    return 1e-8*x;
 
 }
 

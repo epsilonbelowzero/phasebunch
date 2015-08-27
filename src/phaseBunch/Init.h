@@ -42,10 +42,10 @@ void init(	long double* t_start, long double *t_end, long double *dt,
     int i;
 
     //initialise length (from array length): number of particles
-    *length = 1e1;
+    *length = 1e0;
     
     *t_start = 0;//in seconds
-    *t_end   = 1e-5;//in seconds
+    *t_end   = 1e-6;//in seconds
     *dt      = 1e-9;//in seconds
     
     *beamspeed = 0.467 * SOL;
@@ -54,10 +54,8 @@ void init(	long double* t_start, long double *t_end, long double *dt,
 	const long double amplitude = 5;//unit: meter
     *freq = 1e2;//unit: hearts
     const long double omega = 2 * M_PI * (*freq);
-    const long double deltaOmega = 2 * M_PI * 1e5;
+    const long double deltaOmega = 2 * M_PI * 1e5 * 0;
 
-    //generator: generates random numbers, initialising using a seed (unix time)
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::random_device generator;
     //get the first standard distribution: mean, standart deviation
     //as the momentum is expected in eV: both quantities also in eV

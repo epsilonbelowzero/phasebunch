@@ -28,8 +28,8 @@ inline long double computeVi(long double pi, long double gamma, long double m) {
 }
 
 
-void computeLorentz( long double q, long double x, long double *F, long double t) {
-    *F = q *  Ex(x, t);
+void computeLorentz( long double q, long double x, long double *F) {
+    *F = q *  Ex(x);
 }
 
 void computeNewImpulse( long double dt, long double *px, long double F, long double gamma) {
@@ -37,22 +37,22 @@ void computeNewImpulse( long double dt, long double *px, long double F, long dou
     *px = *px + 3e8 * F * dt * gamma;
 }
 
-long double computeNewPosition(
+void computeNewPosition(
     long double dt, long double *x, long double px, long double F, long double gamma, long double m
 ) {
     *x = *x + SOL * px / ( gamma * m ) * dt + 1.0 / 2.0 * dt*dt * F * SOL * SOL / ( gamma * m );
 }
 
 void updateParticle(
-    long double t, long double dt,
+    long double dt,
     long double *x, long double *px,
     long double q, long double m
 ) {
 
-    long double gamma,vx,F;
+    long double gamma,F;
 
     gamma = computeGamma(*px, m);
-    computeLorentz(q, *x, &F, t);
+    computeLorentz(q, *x, &F);
     
     //~ printf("F = %Le\n", F);
 
@@ -66,8 +66,7 @@ void compute(
     long double x[], long double px[], 
     long double m[], long double q[],
     int len, int *k,
-    long double beamspeed, long double circumference,
-    long double *freq
+    long double beamspeed, long double circumference
 ) {
 
     int i,j;
@@ -81,11 +80,10 @@ void compute(
 	hsize_t size[1] = { 0 };
 	const hsize_t RANK = 1; //dimension of data, which is 1
 	
-	hid_t        file;                          /* handles */
-    hid_t        dataspace, dataset;  
-    hid_t        filespace, memspace;
-    hid_t        prop;   
-    herr_t 		status;
+	hid_t   file;                          /* handles */
+    hid_t   dataspace, dataset;  
+    hid_t   filespace, memspace;
+    hid_t   prop;
     
     //create file
     file = H5Fcreate ("result.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);    
@@ -103,14 +101,13 @@ void compute(
 	
 	long double *tmp; tmp = (long double*) malloc(len * sizeof(long double));
     long double t;
-    long double h = 1 / ((*freq) * dt);
     for( t = t_start,j = 1; t < t_end - dt; t += dt) {
 
-#pragma omp parallel for default(none) private(i) shared(len, x, px, dt, m, q, t, beamspeed)
+#pragma omp parallel for default(none) private(i) shared(len, x, px, dt, m, q, t, beamspeed) if(len > 4)
         for(i = 0; i < len; i++) {
-			updateParticle(t, dt, &(x[i]), &(px[i]), q[i], m[i]);
+			updateParticle(dt, &(x[i]), &(px[i]), q[i], m[i]);
         }
-		//printf("particle 1: x = %Le\n", x[0]);
+		//~ printf("%Le\n", x[0]);
         
         //check, whether sync-particle passed the detector
         if( t * beamspeed > j * circumference ) {
@@ -131,14 +128,10 @@ void compute(
 			/* Define memory space */
 			memspace = H5Screate_simple (RANK, dim, NULL);
 
-			#pragma omp parallel for default(none) private(i) shared(tmp, t, px, m, x, len, beamspeed)
+			#pragma omp parallel for default(none) private(i) shared(tmp, t, px, m, x, len, beamspeed)  if(len > 4)
 			for(i = 0; i < len; i++) {
 				tmp[i] = t + x[i] / beamspeed;
 			}
-
-            printf("x[0] = %Le\tpx[0] = %Le\tt = %Le\n", x[0], px[0], tmp[0]);
-            printf("gamma = %Le\n", computeGamma(px[0], m[0]));
-            printf("2.Summand = %Le\n", computeGamma(px[i], m[i]) * x[i] * m[i] / px[i] / SOL);
 
 			/* Write the data to the extended portion of dataset  */
 			H5Dwrite (dataset, H5T_NATIVE_LDOUBLE, memspace, filespace,
