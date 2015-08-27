@@ -4,7 +4,7 @@ compiler:
   - gcc
 
 script:
-  - ./configure
+  - ./configure.sh
 
 before_script:
   - sudo add-apt-repository --yes ppa:smspillaz/cmake-2.8.12
