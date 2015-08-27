@@ -30,7 +30,7 @@ inline long double computeVi(long double pi, long double gamma, long double m) {
 
 void computeLorentz( long double q, long double x, long double *F) {
     //~ *F = q *  Ex(x);
-    *F = q * 1e-8*x;
+    *F = q * 2.193245422464302e-06*x;
 }
 
 void computeNewImpulse( long double dt, long double *px, long double F, long double gamma) {
@@ -108,7 +108,7 @@ void compute(
         for(i = 0; i < len; i++) {
 			updateParticle(dt, &(x[i]), &(px[i]), q[i], m[i]);
         }
-		//~ printf("%Le\n", x[0]);
+		printf("%Le\n", x[0]);
         
         //check, whether sync-particle passed the detector
         if( t * beamspeed > j * circumference ) {
