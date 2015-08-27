@@ -25,13 +25,6 @@ typedef struct part{
 
 } particle;
 
-inline long double computeVelocity(long double amplitude, long double circularFrequency) {
-	return amplitude * circularFrequency; //From x = A * sin(omega * t) -> x' = A * omega * cos(omega * t), for starting velocity: t==0
-}
-inline long double computeFactor(long double velocity) { //from c*p = m0 * gamma * v * c or cp [eV] = E0 [eV] * gamma * beta
-	return 1 / sqrt(1 - (velocity*velocity)/(SOL*SOL)) / SOL * velocity;
-}
-
 void init(	long double* t_start, long double *t_end, long double *dt,
             long double *beamspeed, long double *circumference,
             int *length,
@@ -84,7 +77,7 @@ void init(	long double* t_start, long double *t_end, long double *dt,
 		p->x[i]  = position(generator);//in m
         p->q[i] = -1;//in number of the elementary charge
         p->m[i] = 0.5e6;//in eV
-        p->px[i] = computeFactor(computeVelocity(amplitude, circularFrequency(generator))) * p->m[i];
+        p->px[i] = 5.2;
         
     }
     
