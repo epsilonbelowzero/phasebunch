@@ -7,51 +7,50 @@
 #include <assert.h>
 
 #include "Prints.h"
+#include "Init.h"
 
 
 #ifndef SOL
 #define SOL 299792458
 #endif
 
-void updateParticle(
-    long double dt,
-    long double *x, long double *px,
-    long double q, long double m
-) {
+__global__ void updateParticleCUDA(double dt, double* x, double* px, double* q, double* m, int length) {
+	int tid = threadIdx.x + blockIdx.x * blockDim.x;
+	
+	while (tid < length) {
+		double gamma,F;
 
-    long double gamma,F;
+		gamma = sqrt(1 + (px[tid] * px[tid]) / (m[tid] * m[tid]));
+		F = q[tid] * 2.193245422464302e-06* x[tid]; //computes Lorentz-force
 
-    gamma = sqrtl(1 + ((*px)*(*px)) / (m*m));
-    F = q * 2.193245422464302e-06* (*x); //computes Lorentz-force
-
-	//update position and momentum
-    *x = *x + SOL * (*px) / ( gamma * m ) * dt + 1.0 / 2.0 * dt*dt * F * SOL * SOL / ( gamma * m );
-    *px = *px + 3e8 * F * dt * gamma;
-    
+		//update position and momentum
+		x[tid] = x[tid] + SOL * px[tid] / ( gamma * m[tid] ) * dt + 1.0 / 2.0 * dt*dt * F * SOL * SOL / ( gamma * m[tid] );
+		px[tid] = px[tid] + 3e8 * F * dt * gamma;
+	}
 }
 
 void compute(
     long double t_start, long double t_end, long double dt,
-    long double x[], long double px[], 
-    long double m[], long double q[],
+    particle* p,
     int len,
     long double beamspeed, long double circumference,
     hid_t* dataset
 ) {
-    int i,j;
+    int j;
     long double t;
+    
     for( t = t_start,j = 1; t < t_end - dt; t += dt) {
-
-#pragma omp parallel for default(none) private(i) shared(len, x, px, dt, m, q) if(len > 4)
-        for(i = 0; i < len; i++) {
-			updateParticle(dt, &(x[i]), &(px[i]), q[i], m[i]);
-        }
+        
+        updateParticleCUDA<<<128, 128>>>(dt, p->dev_x, p->dev_px, p->dev_q, p->dev_m, len);
         
         //check, whether sync-particle passed the detector
         if( t * beamspeed > j * circumference ) {
 			//store the current particle-positions, corrected by the current time
 			//(the particle's offset to the sync-particles are computed)
-		    SaveChunk( dataset, j, len, beamspeed, &x);
+			
+			cudaMemcpy( p->x, p->dev_x, sizeof(double) * len, cudaMemcpyDeviceToHost);
+			
+		    SaveChunk( dataset, j, len, beamspeed, &(p->x));
 			j++;
 		}
 

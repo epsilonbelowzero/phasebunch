@@ -13,10 +13,10 @@ int main() {
     printf("Initialising...\n");
     
     //start time, end time and time resolution (each in seconds)
-    long double t_start = 0,
+    double t_start = 0,
 				t_end	= 1e-5,
 				dt		= 1e-9;
-    long double beamspeed 		= 0.467 * SOL,
+    double beamspeed 		= 0.467 * SOL,
 				circumference	= 108.5, //m
 				deltaP = 26e3;
     int 		len = 1e4; //number of particles
@@ -31,8 +31,7 @@ int main() {
 
     printf("Computing...\n");
     compute(t_start, t_end, dt,
-        p.x, p.px,
-        p.m,p.q, len,
+        &p, len,
         beamspeed, circumference,
         &dataset);
         
