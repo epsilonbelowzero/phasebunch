@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 2.8.12)
 #################
 
 project(phaseBunch)
-set(CMAKE_CXX_FLAGS "-std=c++11")# -O3 -Wall -Wextra -Wpedantic -Warray-bounds")
+set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
@@ -38,6 +38,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wvolatile-register-var")
 set(LIBS)
 
 ##########
+#Find CUDA
+##########
+find_package(CUDA 5.0 REQUIRED)
+
+##########
 #Find OpenMP
 #########
 find_package(OpenMP)
@@ -62,9 +67,9 @@ set(LIBS ${LIBS} ${HDF5_LIBRARIES})
 # Build & Links
 #################
 
-file(GLOB_RECURSE SRC_FILES "*.cpp")
+file(GLOB_RECURSE SRC_FILES "*.cu")
 
-add_executable(phaseBunch ${SRC_FILES})
+cuda_add_executable(phaseBunch ${SRC_FILES})
 
 target_link_libraries(phaseBunch ${OpenMP_CXX_FLAGS} ${LIBS} ) #${MPI_Libraries}
 
