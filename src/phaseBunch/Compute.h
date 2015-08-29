@@ -26,6 +26,8 @@ __global__ void updateParticleCUDA(double dt, double* x, double* px, double* q, 
 		//update position and momentum
 		x[tid] = x[tid] + SOL * px[tid] / ( gamma * m[tid] ) * dt + 1.0 / 2.0 * dt*dt * F * SOL * SOL / ( gamma * m[tid] );
 		px[tid] = px[tid] + 3e8 * F * dt * gamma;
+		
+		tid += gridDim.x * blockDim.x;
 	}
 }
 
