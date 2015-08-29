@@ -14,7 +14,7 @@ int main() {
     
     //start time, end time and time resolution (each in seconds)
     double t_start = 0,
-				t_end	= 1e-2,
+				t_end	= 1e-6,
 				dt		= 1e-9;
     double beamspeed 		= 0.467 * SOL,
 				circumference	= 108.5, //m
