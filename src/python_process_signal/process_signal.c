@@ -15,6 +15,8 @@
 
 #include <omp.h>
 
+#include <assert.h>
+
 #include "parallel_quicksort.h"
 
 //Doc: https://docs.python.org/3.1/c-api/structures.html#PyMethodDef
@@ -27,9 +29,9 @@
  * be set. i - integer, d - double
  * 
  */
-static int parse_args(PyObject *args, char** filename, int* serial)
+static int parse_args(PyObject *args, char** filename)
 {
-    if (!PyArg_ParseTuple(args, "s|i", filename, &serial)) {
+    if (!PyArg_ParseTuple(args, "s", filename)) {
         PyErr_SetString(PyExc_ValueError, "Couldn't parse arguments.");
         return -1;
 	}
@@ -51,7 +53,6 @@ static int readFile(char** filename, long double** params, long double **array, 
 	//hdf5-stuff
     hid_t file;
     hid_t dataset, filespace, memspace;
-    hid_t prop;
     int dataDim;//dataDim - dimension of data, i.e. 1-dim (array), 2-dim (2d-array), ...
     hsize_t dims[1];
 
@@ -73,31 +74,29 @@ static int readFile(char** filename, long double** params, long double **array, 
 
 	dataset = H5Dopen2 (file, "/params", H5P_DEFAULT);
 #warning "Fixed params-size in hdf5-file!"
-	*params = (long double*) malloc(sizeof(long double) * 6);
+	*params = (long double*) malloc(sizeof(long double) * 2);
 	H5Dread(dataset, H5T_NATIVE_LDOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, 
                     *params);
-    H5Dclose(dataset);                
-    
+    H5Dclose(dataset);
+
 	dataset = H5Dopen2(file, "/signal", H5P_DEFAULT);
 	filespace = H5Dget_space (dataset);
 	dataDim = H5Sget_simple_extent_ndims (filespace);
 	H5Sget_simple_extent_dims (filespace, dims, NULL);
 	*lines = (int) dims[0];
-	
-	prop = H5Dget_create_plist (dataset);
 
-	memspace = H5Screate_simple (dataDim, dims, NULL);
+	printf("Mem-Alloc (readFile): % .2Lf MB\n", ((long double) sizeof(long double)) * (*lines) / 1024.f / 1024.f);
 	*array = (long double*) malloc(sizeof(long double) * (*lines));
 	
 	if( *array == NULL ) {
 		PyErr_SetString(PyExc_MemoryError, "Could not allocate memory for array containing the file!");
 		return -1;
 	}
-	
+
+	memspace = H5Screate_simple (dataDim, dims, NULL);	
 	H5Dread (dataset, H5T_NATIVE_LDOUBLE, memspace, filespace,
                       H5P_DEFAULT, *array);
 
-	H5Pclose (prop);
     H5Dclose (dataset);
     H5Sclose (filespace);
     H5Sclose (memspace);
@@ -106,13 +105,27 @@ static int readFile(char** filename, long double** params, long double **array, 
     return 0;
 }
 
+static long double findMax(long double** array, int size) {
+	
+	long double maxElement = 0;
+	for(int i = 0; i < size; i++) {
+		if(fabsl((*array)[i]) > maxElement) {
+			maxElement = fabsl((*array)[i]);
+		}
+	}
+	
+	return maxElement;
+}
+
 static int inserting(long double *params, long double **array, int** y, long double** x, int* size, int lines)
 {
 #warning "Fixed Time-Step size!!!"
-    int offset = (int) ((params[0] + 1) * params[5] * 1e9);
-    printf("Mem alloc: %Lu Bytes\n", (long long unsigned int) (offset * sizeof(int) * omp_get_max_threads()));
+	long double max = findMax(array, lines);
+    int offset = (int) (2 * ceil(max / params[0]) + 3),
+		halfOffset = (int) (ceil(max / params[0]));
+    printf("Mem alloc (Insert): % .2Lf MB\n", ((long double) offset) * sizeof(int) * omp_get_max_threads() / 1024.f / 1024.f);
     
-    if(offset * sizeof(int) * omp_get_max_threads() >= 1024L*1024L*1024L*2L) {
+    if( ((long double) offset) * sizeof(int) * omp_get_max_threads() >= 1024.f*1024.f*1024.f*2.f) {
        PyErr_SetString(PyExc_MemoryError, "More than 2 GB would be allocated!");
        return -1;
     }
@@ -125,40 +138,36 @@ static int inserting(long double *params, long double **array, int** y, long dou
 
 #pragma omp parallel
     {
-    const int maxThreads = omp_get_num_threads();
-    const int nThread = omp_get_thread_num();
+		const int maxThreads = omp_get_num_threads();
+		const int nThread = omp_get_thread_num();
 
-    #pragma omp single
-    y_t = (int*) malloc(maxThreads * offset * sizeof(int));
-    
-    for(int i = 0; i < offset; i++) {
-        y_t[offset * nThread + i] = 0;
-    }
+		#pragma omp single
+		y_t = (int*) malloc(maxThreads * offset * sizeof(int));
+		
+		for(int i = 0; i < offset; i++) {
+			y_t[offset * nThread + i] = 0;
+		}
 
-    #pragma omp for
-        for(int i = 0; i < lines; i++) {
-            y_t[(int) (floorl(fabsl((*array)[i]) * 1e9) + offset * nThread)] += 1;
-        }
+		#pragma omp for
+		for(int i = 0; i < lines; i++) {
+			y_t[(int) (floorl((*array)[i] * 1e9) + halfOffset + 1 + offset * nThread)] += 1;
+		}
 
-    #pragma omp for
-        for(int i = 0; i < offset; i++) {
-            for(int j = 0; j < maxThreads; j++) {
-                (*y)[i] += y_t[i + offset * j];
-            }
-        }
+		#pragma omp for
+		for(int i = 0; i < offset; i++) {
+			for(int j = 0; j < maxThreads; j++) {
+				(*y)[i] += y_t[i + offset * j];
+			}
+		}
     }
     free(y_t);
 
-    //~ int i = offset - 1;
-    //~ for( i = offset - 1; y[i] == 0; i-- ) {}
     *size = offset;
-    *y = (int*) realloc(*y, sizeof(int) * (*size));
-    
     *x = (long double*) malloc(sizeof(long double) * (*size));
     int k;
-#pragma omp parallel for default(none) shared(x, size, params) private(k)
-    for( k = 0; k < *size; k += 1) {
-        (*x)[k] = k * params[2];
+#pragma omp parallel for default(none) shared(x, size, params, halfOffset, offset) private(k)
+    for( k = 0; k < offset; k ++) {
+        (*x)[k] = (k - halfOffset - 1) * params[0];
     }
     
     return 0;
@@ -182,8 +191,6 @@ static PyObject* buildNumpyArray(int length, int type, void** array) {
 	if( numpylist == NULL ) {
 		return NULL;
 	}
-	//mark the array as owned, so the memory is released after its no longer needed
-	//~ PyArray_ENABLEFLAGS(numpylist, NPY_ARRAY_OWNDATA);
 	
 	return numpylist;
 }
@@ -196,10 +203,9 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	
 	//the parameters and their defaults are set
 	char* filename;
-	int serial = 1000;
-	int return_code;
 	long double* array;//array containing the file-content
 	int lines;//number of file-entries
+	int return_code;
 	long double* params;
 	int* y;
 	long double* x;
@@ -207,7 +213,7 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	//arguments parsed. if an error occurred, an exception is already
 	//thrown, and NULL is returned
 	printf("Parsing args\n");
-	return_code = parse_args(args, &filename, &serial);
+	return_code = parse_args(args, &filename);
 	if( return_code < 0 ) {
 		return NULL;
 	}
@@ -229,12 +235,11 @@ static PyObject *process(PyObject *self, PyObject *args) {
     if( return_code < 0) {
         return NULL;
     }
-	free(params);
     free(array);
 		
 	PyObject* yValues = buildNumpyArray(size, NPY_INT, (void**) &y);
 	PyObject* xValues = buildNumpyArray(size, NPY_LONGDOUBLE, (void**) &x);
-	PyObject* retList = PyList_New(2);
+	PyObject* retList = PyList_New(3);
 
 	if(retList == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "Could not create returning list!");
@@ -243,6 +248,15 @@ static PyObject *process(PyObject *self, PyObject *args) {
 	
 	PyList_SET_ITEM(retList, 0, xValues);
 	PyList_SET_ITEM(retList, 1, yValues);
+	PyList_SET_ITEM(retList, 2, 
+		PyArray_Scalar(
+			&(params[1]),
+			PyArray_DescrFromType(NPY_LONGDOUBLE),
+			PyLong_FromLong(1)
+		)
+	);
+	
+	free(params);
 
 	return retList;
 }

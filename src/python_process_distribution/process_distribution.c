@@ -45,9 +45,7 @@ static int readFile(char** filename, double **array, int* lines) {
 	
 	//hdf5-stuff
     hid_t file_id;
-    //~ int d1[1];
     hsize_t dims[1];
-    //~ herr_t status;
 
 	if( access(*filename, F_OK) ) {
 		PyErr_SetString(PyExc_FileNotFoundError, "File not found");

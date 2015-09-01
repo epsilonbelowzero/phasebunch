@@ -2,116 +2,99 @@
 #define PRINT_H
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <hdf5.h>
 #include <hdf5_hl.h>
-#define BUF 100
 
-void truncateFile() {
-    FILE *f = fopen("results.txt", "w+");
-    fclose(f);
+#ifndef RANK
+#define RANK 1 //data-dimension ( = 1)
+#endif
+
+void printInitDistribution(long double** p, int length) {
+	double *tmp;
+    tmp = (double*) malloc(sizeof(double) * length);
+    for(int i=0; i < length; i++) {
+		tmp[i] = (double) (*p)[i];
+	}
+    
+    hid_t file_id;
+	hsize_t dims[1] = { (long long unsigned int) length };
+	
+    file_id = H5Fcreate("distribution.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+	H5LTmake_dataset(file_id,"/signal",1,dims,H5T_NATIVE_DOUBLE,tmp);
+	H5Fclose(file_id);
+    free(tmp);
 }
 
-//not used
-void print(long double t,
-    long double x[], long double y[], long double z[],
-    long double px[], long double py[], long double pz[],
-    int len
-) {
-    FILE *f = fopen("results.txt", "a+");
+void InitResultFile(hid_t* file, hid_t* dataset, int len) {
+	//for memory-reasons, whenever the particle-positions are to be
+    //stored, they are directly written into the resulting file.
+    //So - a lot of hdf5-stuff to do here
+	hsize_t dim[1] = { (long long unsigned int) len }; //length of a chunk, which is the number of particles
+	hsize_t maxdim[1] = {H5S_UNLIMITED};
+	
+    hid_t   dataspace;
+    hid_t   prop;
+    
+    //create file
+    *file = H5Fcreate ("result.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);    
+    
+    //create data-space w/o dimension-limit
+    dataspace = H5Screate_simple (RANK, dim, maxdim);
 
-    int i;
-    char buf[BUF];
-    char *buffer = (char*) malloc(sizeof(char) * len * BUF);
-    strcpy(buffer, "");
-    for(i = 0; i < len; i++) {
-        snprintf(buf, 100, "%014.10Lf %014.10Lf %014.10Lf ", x[i], y[i], z[i]);
-        strcat(buffer, buf);
-    }
-    strcat(buffer, "\n");
-    fwrite( buffer, sizeof(char), strlen(buffer), f);
-
-    free(buffer);
-    fclose(f);
+    /* Modify dataset creation properties, i.e. enable chunking  */    
+    prop = H5Pcreate (H5P_DATASET_CREATE);
+    H5Pset_chunk (prop, RANK, dim);
+    /* Create a new dataset within the file using chunk 
+       creation properties.  */
+    *dataset = H5Dcreate2 (*file, "signal", H5T_NATIVE_LDOUBLE, dataspace,
+                         H5P_DEFAULT, prop, H5P_DEFAULT);
+                         
+    H5Pclose (prop);
+    H5Sclose (dataspace);
 }
 
-void print_array(   long double t_start, long double t_end, long double dt,
-                    int length, int printEveryNthTimeStep,
-                    long double ***result
-) {
-
-    FILE *f = fopen("results.txt", "a+");
-
-    int i,j;
-    long double t;
-    char buf[BUF];
-    char *buffer = (char*) malloc(sizeof(char) * length * BUF);
-
-    for( t = t_start,j = 0; t < t_end - dt; t += printEveryNthTimeStep * dt, j++)  {
-
-        strcpy(buffer, "");
-
-        for(i = 0; i < length; i++) {
-
-            snprintf(buf, 100, "%014.10Lf ", (*result)[j][i]);
-            strcat(buffer, buf);
-
-        }
-
-        strcat(buffer, "\n");
-        fwrite( buffer, sizeof(char), strlen(buffer), f);
-    }
-
-    free(buffer);
-    fclose(f);
-
-}
-
-void truncate_signals(){
-
-    FILE *f = fopen("signals.txt", "w+");
-    printf("signals.txt created \n");
-    fclose(f);
-
-}
-
-
-
-
-
-void print_signal(long double **sign, int length, int k ){
-
-	double* conv_sign =(double*) malloc(sizeof(double)*k*2);
-
+void SaveChunk(hid_t* dataset, int turn, int len, long double beamspeed, long double** x) {
+	hid_t filespace, memspace;
+	hsize_t dim[1] 		= { (long long unsigned int) len };
+	hsize_t offset[1] 	= { (turn-1) * dim[0] };
+	hsize_t size[1] 	= { turn * dim[0] };
+	
+	long double *tmp; tmp = (long double*) malloc(len * sizeof(long double));
+	
+	H5Dset_extent (*dataset, size);
+	/* Select a hyperslab in extended portion of dataset  */
+	filespace = H5Dget_space(*dataset);
+	H5Sselect_hyperslab (filespace, H5S_SELECT_SET, offset, NULL,
+								  dim, NULL);  
+	/* Define memory space */
+	memspace = H5Screate_simple (RANK, dim, NULL);
+	
 	int i;
-#pragma omp parallel for default(none) private(i) shared(k, conv_sign, sign)
-	for(i = 0; i < 2*k; i++){
-
-		conv_sign[i]=(double) (*sign)[i];
-
+	#pragma omp parallel for default(none) private(i) shared(tmp, x, len, beamspeed) if(len > 4)
+	for(i = 0; i < len; i++) {
+		tmp[i] = (*x)[i] / beamspeed;
 	}
 
-
-	hid_t file_id;
-	hsize_t dims[1];
-	herr_t status;
-	dims[0] = 2*k;
-	file_id = H5Fcreate("signal.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
-	status = H5LTmake_dataset(file_id,"/signal",1,dims,H5T_NATIVE_DOUBLE,conv_sign);
-	status = H5Fclose(file_id);
-
-	free(conv_sign);
-
-
-
-
+	/* Write the data to the extended portion of dataset  */
+	H5Dwrite (*dataset, H5T_NATIVE_LDOUBLE, memspace, filespace,
+					   H5P_DEFAULT, tmp);
+					
+	
+	H5Sclose (memspace);
+	H5Sclose (filespace);
+	free(tmp);
 }
 
-
-
-
-
-
+void FinalizeResultFile(hid_t *dataset, hid_t* file,
+	long double dt, long double circumference, long double beamspeed) {
+    /* Close resources */
+    H5Dclose (*dataset);
+    
+    hsize_t size[1] = { 2 };
+    long double params[] = { dt , circumference / beamspeed};
+    H5LTmake_dataset(*file,"/params",1,size,H5T_NATIVE_LDOUBLE,params);
+    
+    H5Fclose (*file);
+}
 
 #endif
