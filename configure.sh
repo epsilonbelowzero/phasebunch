@@ -64,6 +64,8 @@ fi
 echo "Running cmake"
 tput sgr0
 
+set -e
+
 cmake "${addOption}" .
 
 tput setaf 3
