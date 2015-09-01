@@ -112,7 +112,7 @@ static int inserting(long double *params, long double **array, int** y, long dou
     int offset = (int) ((params[0] + 1) * params[5] * 1e9);
     printf("Mem alloc: %Lu Bytes\n", (long long unsigned int) (offset * sizeof(int) * omp_get_max_threads()));
     
-    if(offset * sizeof(int) * omp_get_max_threads() >= 1024L*1024L*1024L*2L) {
+    if(float(offset) * sizeof(int) * omp_get_max_threads() >= 1024f*1024f*1024f*2f) {
        PyErr_SetString(PyExc_MemoryError, "More than 2 GB would be allocated!");
        return -1;
     }
