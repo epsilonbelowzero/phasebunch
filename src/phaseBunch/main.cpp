@@ -16,9 +16,9 @@ int main() {
     long double t_start = 0,
 				t_end	= 1e-5,
 				dt		= 1e-9;
-    long double beamspeed 		= 0.467 * SOL,
+    long double beamspeed 		= 0.47 * SOL,
 				circumference	= 108.5, //m
-				deltaP = 26e3;
+				deltaP = 5.985;//eV
     int 		len = 1e4; //number of particles
     particle p;
     

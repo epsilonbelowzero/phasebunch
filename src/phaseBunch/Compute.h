@@ -22,7 +22,7 @@ void updateParticle(
     long double gamma,F;
 
     gamma = sqrtl(1 + ((*px)*(*px)) / (m*m));
-    F = q * 2.193245422464302e-06* (*x); //computes Lorentz-force
+    F = q * 3313865209968.416* (*x); //computes Lorentz-force
 
 	//update position and momentum
     *x = *x + SOL * (*px) / ( gamma * m ) * dt + 1.0 / 2.0 * dt*dt * F * SOL * SOL / ( gamma * m );
