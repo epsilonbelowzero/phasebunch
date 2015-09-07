@@ -14,12 +14,12 @@ int main() {
     
     //start time, end time and time resolution (each in seconds)
     long double t_start = 0,
-				t_end	= 1e-3,
-				dt		= 1e-9;
+				t_end	= 1e-2,
+				dt		= 1e-7;
     long double beamspeed 		= 0.47 * SOL,
 				circumference	= 108.5, //m
 				deltaP = 146.0;//eV
-    int 		len = 1e1; //number of particles
+    int 		len = 1e4; //number of particles
     particle p;
     
     //HDF5-Handles;

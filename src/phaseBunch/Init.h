@@ -32,7 +32,7 @@ void init(	int length, particle *p, long double deltaP,
     for( int i=0; i < length; i++) {
 		p->x[i]  = position(generator);//in m
         p->q[i] = 6;//in number of the elementary charge
-        p->m[i] = 11.26659e11;//in eV
+        p->m[i] = 11.26659e9;//in eV
         p->px[i] = momentum(generator);
         
     }

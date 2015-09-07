@@ -22,11 +22,11 @@ void updateParticle(
     long double gamma,F;
 
     gamma = sqrtl(1 + ((*px)*(*px)) / (m*m));
-    F = q * 2.98e26* (*x); //computes Lorentz-force
+    F = q *4.93 * (*x); //computes Lorentz-force
 
 	//update position and momentum
     *x = *x + SOL * (*px) / ( gamma * m ) * dt + 1.0 / 2.0 * dt*dt * F * SOL * SOL / ( gamma * m );
-    printf("%Le \n",*x);
+    //if(*x>=3.0)printf("%Le \n",*x);
     *px = *px + 3e8 * F * dt * gamma;
     
 }
