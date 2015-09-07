@@ -119,7 +119,6 @@ static long double findMax(long double** array, int size) {
 
 static int inserting(long double *params, long double **array, int** y, long double** x, int* size, int lines)
 {
-#warning "Fixed Time-Step size!!!"
 	long double max = findMax(array, lines);
     int offset = (int) (2 * ceil(max / params[0]) + 3),
 		halfOffset = (int) (ceil(max / params[0]));
@@ -150,7 +149,7 @@ static int inserting(long double *params, long double **array, int** y, long dou
 
 		#pragma omp for
 		for(int i = 0; i < lines; i++) {
-			y_t[(int) (floorl((*array)[i] * 1e9) + halfOffset + 1 + offset * nThread)] += 1;
+			y_t[(int) (floorl((*array)[i] / params[0]) + halfOffset + 1 + offset * nThread)] += 1;
 		}
 
 		#pragma omp for
