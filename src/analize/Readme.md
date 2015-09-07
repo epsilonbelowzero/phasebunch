@@ -36,7 +36,7 @@ What I'm currently thinking of:
 
 # TODO
 
-Feature |      Status
+Feature | Status
 
 -----------|--------------
 
