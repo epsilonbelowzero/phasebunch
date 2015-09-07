@@ -22,7 +22,6 @@ project(analizer)
 #####################
 
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -Ofast")
 
 ####################
 # Find Cuda
