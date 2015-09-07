@@ -60,12 +60,6 @@ void SaveChunk(hid_t* dataset, int turn, int len, double beamspeed, double** x) 
 								  dim, NULL);  
 	/* Define memory space */
 	memspace = H5Screate_simple (RANK, dim, NULL);
-	
-	int i;
-	#pragma omp parallel for default(none) private(i) shared(x, len, beamspeed) if(len > 4)
-	for(i = 0; i < len; i++) {
-		(*x)[i] /= beamspeed;
-	}
 
 	/* Write the data to the extended portion of dataset  */
 	H5Dwrite (*dataset, H5T_NATIVE_DOUBLE, memspace, filespace,

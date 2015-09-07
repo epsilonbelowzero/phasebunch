@@ -31,6 +31,14 @@ __global__ void updateParticleCUDA(double dt, double* x, double* px, double* q, 
 	}
 }
 
+__global__ void computeTime(double* x, double* t, double beamspeed, int length) {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    
+    while(tid < length) {
+        t[tid] = x[tid] / beamspeed
+    }
+}
+
 void compute(
     long double t_start, long double t_end, long double dt,
     particle* p,
@@ -43,14 +51,15 @@ void compute(
     
     for( t = t_start,j = 1; t < t_end - dt; t += dt) {
         
-        updateParticleCUDA<<<128, 128>>>(dt, p->dev_x, p->dev_px, p->dev_q, p->dev_m, len);
+        updateParticleCUDA<<<128, 256>>>(dt, p->dev_x, p->dev_px, p->dev_q, p->dev_m, len);
         
         //check, whether sync-particle passed the detector
         if( t * beamspeed > j * circumference ) {
 			//store the current particle-positions, corrected by the current time
 			//(the particle's offset to the sync-particles are computed)
 			
-			cudaMemcpy( p->x, p->dev_x, sizeof(double) * len, cudaMemcpyDeviceToHost);
+            computeTime<<<128, 256>>>(p->dev_x, p->dev_time, (double) beamspeed, length);
+			cudaMemcpy( p->x, p->dev_time, sizeof(double) * len, cudaMemcpyDeviceToHost);
 			
 		    SaveChunk( dataset, j, len, beamspeed, &(p->x));
 			j++;

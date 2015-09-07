@@ -15,6 +15,7 @@
 typedef struct part{
    double *x, *px, *q, *m;
    double *dev_x, *dev_px, *dev_q, *dev_m;
+   double *dev_time;
 } particle;
 
 double ranf() {
@@ -78,6 +79,7 @@ void init(	int length, particle *p, double deltaP,
 	CUDA_RETURN_CHECK( cudaMalloc( (void**) &(p->dev_px), length * sizeof(double)));
 	CUDA_RETURN_CHECK( cudaMalloc( (void**) &(p->dev_m), length * sizeof(double)));
 	CUDA_RETURN_CHECK( cudaMalloc( (void**) &(p->dev_q), length * sizeof(double)));
+	CUDA_RETURN_CHECK( cudaMalloc( (void**) &(p->dev_time), length * sizeof(double)));
 
     //initialise each parameter for each particle
     for( int i=0; i < length; i++) {
