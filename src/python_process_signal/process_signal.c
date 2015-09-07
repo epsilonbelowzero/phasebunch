@@ -119,7 +119,6 @@ static long double findMax(long double** array, int size) {
 
 static int inserting(long double *params, long double **array, int** y, long double** x, int* size, int lines)
 {
-#warning "Fixed Time-Step size!!!"
 	long double max = findMax(array, lines);
     int offset = (int) (2 * ceil(max / params[0]) + 3),
 		halfOffset = (int) (ceil(max / params[0]));
