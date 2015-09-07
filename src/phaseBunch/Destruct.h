@@ -12,5 +12,11 @@ void destruct(
     free(p.px);
     free(p.q);
     free(p.m);
+    
+    cudaFree(p.dev_x);
+    cudaFree(p.dev_px);
+    cudaFree(p.dev_m);
+    cudaFree(p.dev_q);
+    cudaFree(p.dev_time);
 }
 #endif

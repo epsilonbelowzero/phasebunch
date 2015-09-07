@@ -9,20 +9,14 @@
 #define RANK 1 //data-dimension ( = 1)
 #endif
 
-void printInitDistribution(long double** p, int length) {
-	double *tmp;
-    tmp = (double*) malloc(sizeof(double) * length);
-    for(int i=0; i < length; i++) {
-		tmp[i] = (double) (*p)[i];
-	}
+void printInitDistribution(double** p, int length) {
     
     hid_t file_id;
 	hsize_t dims[1] = { (long long unsigned int) length };
 	
     file_id = H5Fcreate("distribution.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
-	H5LTmake_dataset(file_id,"/signal",1,dims,H5T_NATIVE_DOUBLE,tmp);
+	H5LTmake_dataset(file_id,"/signal",1,dims,H5T_NATIVE_DOUBLE,*p);
 	H5Fclose(file_id);
-    free(tmp);
 }
 
 void InitResultFile(hid_t* file, hid_t* dataset, int len) {
@@ -46,20 +40,18 @@ void InitResultFile(hid_t* file, hid_t* dataset, int len) {
     H5Pset_chunk (prop, RANK, dim);
     /* Create a new dataset within the file using chunk 
        creation properties.  */
-    *dataset = H5Dcreate2 (*file, "signal", H5T_NATIVE_LDOUBLE, dataspace,
+    *dataset = H5Dcreate2 (*file, "signal", H5T_NATIVE_DOUBLE, dataspace,
                          H5P_DEFAULT, prop, H5P_DEFAULT);
                          
     H5Pclose (prop);
     H5Sclose (dataspace);
 }
 
-void SaveChunk(hid_t* dataset, int turn, int len, long double beamspeed, long double** x) {
+void SaveChunk(hid_t* dataset, int turn, int len, double beamspeed, double** x) {
 	hid_t filespace, memspace;
 	hsize_t dim[1] 		= { (long long unsigned int) len };
 	hsize_t offset[1] 	= { (turn-1) * dim[0] };
 	hsize_t size[1] 	= { turn * dim[0] };
-	
-	long double *tmp; tmp = (long double*) malloc(len * sizeof(long double));
 	
 	H5Dset_extent (*dataset, size);
 	/* Select a hyperslab in extended portion of dataset  */
@@ -68,31 +60,24 @@ void SaveChunk(hid_t* dataset, int turn, int len, long double beamspeed, long do
 								  dim, NULL);  
 	/* Define memory space */
 	memspace = H5Screate_simple (RANK, dim, NULL);
-	
-	int i;
-	#pragma omp parallel for default(none) private(i) shared(tmp, x, len, beamspeed) if(len > 4)
-	for(i = 0; i < len; i++) {
-		tmp[i] = (*x)[i] / beamspeed;
-	}
 
 	/* Write the data to the extended portion of dataset  */
-	H5Dwrite (*dataset, H5T_NATIVE_LDOUBLE, memspace, filespace,
-					   H5P_DEFAULT, tmp);
+	H5Dwrite (*dataset, H5T_NATIVE_DOUBLE, memspace, filespace,
+					   H5P_DEFAULT, *x);
 					
 	
 	H5Sclose (memspace);
 	H5Sclose (filespace);
-	free(tmp);
 }
 
 void FinalizeResultFile(hid_t *dataset, hid_t* file,
-	long double dt, long double circumference, long double beamspeed) {
+	double dt, double circumference, double beamspeed) {
     /* Close resources */
     H5Dclose (*dataset);
     
     hsize_t size[1] = { 2 };
-    long double params[] = { dt , circumference / beamspeed};
-    H5LTmake_dataset(*file,"/params",1,size,H5T_NATIVE_LDOUBLE,params);
+    double params[] = { dt , circumference / beamspeed};
+    H5LTmake_dataset(*file,"/params",1,size,H5T_NATIVE_DOUBLE,params);
     
     H5Fclose (*file);
 }
