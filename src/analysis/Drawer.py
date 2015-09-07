@@ -20,7 +20,7 @@ ax = fig.add_subplot(111)
 
 ax.plot(x, y, ".")
 ax.set_xlabel("$\mathbf{n \cdot dt}$")
-
+ax.set_yscale('log');
 print(1 / (T + x))
 
 #~ ax = fig.add_subplot(212)

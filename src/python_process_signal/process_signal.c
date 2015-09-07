@@ -145,12 +145,12 @@ static int inserting(long double *params, long double **array, int** y, long dou
 		y_t = (int*) malloc(maxThreads * offset * sizeof(int));
 		
 		for(int i = 0; i < offset; i++) {
-			y_t[offset * nThread + i] = 0;
+			y_t[offset * nThread + i] = 0;//@TODO
 		}
 
 		#pragma omp for
 		for(int i = 0; i < lines; i++) {
-			y_t[(int) (floorl((*array)[i] * 1e9) + halfOffset + 1 + offset * nThread)] += 1;
+			y_t[(int) (floorl((*array)[i] * params[0]) + halfOffset + 1 + offset * nThread)] += 1;
 		}
 
 		#pragma omp for
