@@ -37,17 +37,11 @@ What I'm currently thinking of:
 # TODO
 
 Feature | Status
-
 -----------|--------------
-
 Find an algorithm which allows to read an HDF5 file/data in chunks by different threads| :heavy_multiplication_x: 
-
 Read a HDF5 File  in chunks |  :heavy_multiplication_x: 
-
 Each thread does the analysis of a chunk | :heavy_multiplication_x: 
-
 Let the result get into one file | :heavy_multiplication_x: 
-
 Save the file | :heavy_multiplication_x: 
 
 
