@@ -84,7 +84,7 @@ void init(	int length, particle *p, double deltaP,
     //initialise each parameter for each particle
     for( int i=0; i < length; i++) {
 		p->x[i]  = 0;//in m
-        p->q[i] = 12;//in number of the elementary charge
+        p->q[i] = 3;//in number of the elementary charge
         p->m[i] = 11.26659e9;//in eV
         p->px[i] = box_muller(0, deltaP);
         
