@@ -72,8 +72,8 @@ void init(	int length, particle *p, double deltaP,
     p->m  = (double*) malloc(sizeof(double) * length);
     
 	//mem > 3GB should be chunked -> not implemented
-	printf("GPU-Mem to be allocated: % .2lf\n", (double) length * 4 * sizeof(double));
-	assert( (double) length * 4 * sizeof(double) < 1024.f * 1024.f * 1024.f * 3.f);
+	printf("GPU-Mem to be allocated: % .2lf\n", (double) length * 5 * sizeof(double));
+	assert( (double) length * 5 * sizeof(double) < 1024.f * 1024.f * 1024.f * 3.f);
 	
 	CUDA_RETURN_CHECK( cudaMalloc( (void**) &(p->dev_x), length * sizeof(double)));
 	CUDA_RETURN_CHECK( cudaMalloc( (void**) &(p->dev_px), length * sizeof(double)));
@@ -84,8 +84,8 @@ void init(	int length, particle *p, double deltaP,
     //initialise each parameter for each particle
     for( int i=0; i < length; i++) {
 		p->x[i]  = 0;//in m
-        p->q[i] = -1;//in number of the elementary charge
-        p->m[i] = 0.5e6;//in eV
+        p->q[i] = 12;//in number of the elementary charge
+        p->m[i] = 11.26659e9;//in eV
         p->px[i] = box_muller(0, deltaP);
         
     }

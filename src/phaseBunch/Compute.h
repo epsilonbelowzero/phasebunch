@@ -9,7 +9,6 @@
 #include "Prints.h"
 #include "Init.h"
 
-
 #ifndef SOL
 #define SOL 299792458
 #endif

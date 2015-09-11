@@ -41,6 +41,7 @@ set(LIBS)
 #Find CUDA
 ##########
 find_package(CUDA 5.0 REQUIRED)
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}" -Xptxas=-v)
 
 ##########
 #Find OpenMP
