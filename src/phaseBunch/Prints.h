@@ -47,7 +47,7 @@ void InitResultFile(hid_t* file, hid_t* dataset, int len) {
     H5Sclose (dataspace);
 }
 
-void SaveChunk(hid_t* dataset, int turn, int len, double beamspeed, double** x) {
+void SaveChunk(hid_t* dataset, int turn, int len, double** x) {
 	hid_t filespace, memspace;
 	hsize_t dim[1] 		= { (long long unsigned int) len };
 	hsize_t offset[1] 	= { (turn-1) * dim[0] };
