@@ -15,34 +15,28 @@ cmake_minimum_required(VERSION 3.0.0)
 project(analizer)
 
 
-
-
-######################
-#Use some awesome flags
-#####################
-
-
-
-####################
-# Find Cuda
-####################
+###############
+#Try to find Cuda!
+##############
+find_package(CUDA)
 
 
 
+if(NOT ${CUDA_FOUND})
+
+	###################
+	#Find OpenMp
+	###################
+	find_package(OpenMP REQUIRED)
+	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS})
+	set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS})
+	message("-- Using OpenMP!")
+
+endif(NOT ${CUDA_FOUND})
 
 
-###################
-#Find OpenMp
-###################
-find_package(OpenMP REQUIRED)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 
-###################
-#CUDA
-##################
-find_package(CUDA REQUIRED)
 
 
 ###################
@@ -57,11 +51,25 @@ set(LIBS ${LIBS} ${HDF5_LIBRARIES})
 #Setup the rest
 #############
 
+if(${CUDA_FOUND})
 
-file(GLOB_RECURSE SRC_FILES "*.cu")
+	message("-- Using CUDA")
+	file(GLOB SRC_FILES "*.cu")
+ 	cuda_add_executable(analizer ${SRC_FILES})
+	target_link_libraries(analizer ${LIBS} )
+	
 
-cuda_add_executable(analizer ${SRC_FILES})
+elseif(NOT ${CUDA_FOUND})
+
+	message("-- Using OpenMP instead of CUDA")
+	file(GLOB SRC_FILES "*.cpp")
+	add_executable(analizer ${SRC_FILES})
+	target_link_libraries(analizer ${OPENMP_CXX_FLAGS} ${LIBS})
+	message("Source files are: ${SRC_FILES}")	
+
+
+endif(${CUDA_FOUND})
 
 
 
-target_link_libraries(analizer ${OpenMP_CXX_FLAGS} ${LIBS})
+
