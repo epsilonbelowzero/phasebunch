@@ -7,18 +7,36 @@
 
 
 
-void read(char** argc, char* argv, ){
+void readParams(char** argc,long double** params,hsize_t** dims ){
 
 	
- 	hid_t file,dataset,filespace,memspace,dims[2]; // Create all the necessary attributes to read the file!
+ 	hid_t file; // Create all the necessary attributes to read the file!
+       	hid_t dataset;
+	file = H5Fopen(argc[1], H5F_ACC_RDONLY, H5P_DEFAULT);
+	dataset = H5Dopen2(file,"/params",H5P_DEFAULT);
+	H5Dread(dataset, H5T_NATIVE_LDOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, *params);
+	H5LTget_dataset_info(file,"/signal",*dims,NULL,NULL);
+	H5Dclose(dataset);			
+	H5Fclose(file);		
 	
+}
+
+void readData(char** argc, long double** data){
+
+	hid_t file;
+	hid_t dataset;
+	file=H5Fopen(argc[1],H5F_ACC_RDONLY,H5P_DEFAULT);
+	dataset = H5Dopen2(file,"/signal",H5P_DEFAULT);
+	H5Dread(dataset,H5T_NATIVE_LDOUBLE,H5S_ALL,H5S_ALL,H5P_DEFAULT,*data);
+	H5Dclose(dataset);
+	H5Fclose(file);
+
+
 
 
 
 
 }
-
-
 
 
 
