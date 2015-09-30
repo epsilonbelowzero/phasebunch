@@ -20,6 +20,7 @@ __global__ void updateParticleCUDA(double dt, double* x, double* px, double* q, 
 		double gamma,F;
 
 		gamma = sqrt(1 + (px[tid] * px[tid]) / (m[tid] * m[tid]));
+<<<<<<< HEAD
 		F = q[tid] *(-0.016463962304632027)* x[tid]; //computes Lorentz-force
 
 		//update position and momentum
