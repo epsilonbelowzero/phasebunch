@@ -12,13 +12,15 @@ if len(sys.argv) < 2:
 	print("You forgot the file!")
 	sys.exit(1)
 
-x,y, T = process_signal.process(sys.argv[1])
+x,y, T,x1,y1 = process_signal.process(sys.argv[1])
 
 fig = plt.figure()
 
-ax = fig.add_subplot(111)
+ax = fig.add_subplot(211)
 
 ax.plot(x, y, ".")
+ax = fig.add_subplot(212)
+ax.plot(x1,y1);
 ax.set_xlabel("$\mathbf{n \cdot dt}$")
 
 print(1 / (T + x))

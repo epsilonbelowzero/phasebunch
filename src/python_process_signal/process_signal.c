@@ -120,7 +120,7 @@ static long double findMax(long double** array, int size) {
 static int inserting(long double *params, long double **array, int** y, long double** x, int* size, int lines)
 {
 #warning "Fixed Time-Step size!!!"
-	long double max = findMax(array, lines);
+    long double max = findMax(array, lines);
     int offset = (int) (2 * ceil(max / params[0]) + 3),
 		halfOffset = (int) (ceil(max / params[0]));
     printf("Mem alloc (Insert): % .2Lf MB\n", ((long double) offset) * sizeof(int) * omp_get_max_threads() / 1024.f / 1024.f);
@@ -135,7 +135,7 @@ static int inserting(long double *params, long double **array, int** y, long dou
         (*y)[i] = 0;
     }
     int* y_t;
-
+       
 #pragma omp parallel
     {
 		const int maxThreads = omp_get_num_threads();
@@ -143,7 +143,30 @@ static int inserting(long double *params, long double **array, int** y, long dou
 
 		#pragma omp single
 		y_t = (int*) malloc(maxThreads * offset * sizeof(int));
+	 	/*
+
+		Get an array which is n*offset on 
+		in the next step initialize every value with 0
 		
+		If we would sort everything in one array we
+		would get a race condition!So we make a pretty
+		long array and every thread gets his own sorting 
+		array.(It's very memory consuming but faster!)
+
+
+
+		In the last sorting step you'll have to look out: 
+		
+		At first take the value and take it times 1e9 to 
+		get a whole index number! This times half the offset+1
+		will give you the right indexnumber. 
+
+		Imagine a array which has one point for each timestep. 
+		First we look out where our Index is placed and then
+		add half a period to get the right period.
+
+
+		*/	
 		for(int i = 0; i < offset; i++) {
 			y_t[offset * nThread + i] = 0;
 		}
@@ -172,6 +195,52 @@ static int inserting(long double *params, long double **array, int** y, long dou
     
     return 0;
 }
+
+
+
+
+void insert2(long double *params, long double **array, int** y, long double** x, int* size, int lines){
+
+	/**
+
+
+	Initialize the needed memory parameters, 
+	a0 ist how many bins you'll need to fill
+	the array + 3!
+	a1 is half the number of bins you'll need
+	(that means how many bins will fit in one amplitude)
+
+
+
+	**/
+
+	max = findMax(array,lines);
+	long T = (long) 1/params[0]
+        int a0 = (int)(2*ceil(max/params[0])+3); 	
+	int a1 = (int) (ceil(max/params[0])+3); 
+	
+
+        **y = (int*)malloc(sizeof(int)*a0);
+	for(int i = 0; i<a0;i++){
+
+	    *y[i]=0;
+
+	} 	
+	
+        //Now all the Values from array should be sorted into an
+	//Bin
+	
+	 
+
+
+
+
+
+
+
+}
+
+
 
 	//generate numpy-array
 	//as python cannot handle c-arrays, it needs to be converted into
@@ -228,18 +297,40 @@ static PyObject *process(PyObject *self, PyObject *args) {
 		return NULL;
     }
 
-    printf("Seperating...\n");
+    printf("Inserting Part 1/2 \n");
     
     int size;
     return_code = inserting(params, &array, &y, &x, &size, lines);
     if( return_code < 0) {
         return NULL;
     }
+
+
+    #pragma omp parallel for
+
+    for(int i = 0; i < lines; i++){
+
+	array[i]=1/((array[i])+1/params[0]);	
+
+    }
+
+    /*
+	Now use insert for the frequency space!
+
+    */
+    printf("Inserting Part 2/2 \n");	
+    long *x1, *y1;
+    params[0]=1/params[0];
+    insert2(params,&array,&x1,&y1,&size,lines); 
+      
+
     free(array);
 		
 	PyObject* yValues = buildNumpyArray(size, NPY_INT, (void**) &y);
 	PyObject* xValues = buildNumpyArray(size, NPY_LONGDOUBLE, (void**) &x);
-	PyObject* retList = PyList_New(3);
+	PyObject* x1Values = buildNumpyArray(size,NPY_LONG,(void**) &x1);
+	PyObject* y1Values = buildNumpyArray(size,NPY_LONG,(void**) &y1);
+	PyObject* retList = PyList_New(5);
 
 	if(retList == NULL) {
 		PyErr_SetString(PyExc_RuntimeError, "Could not create returning list!");
@@ -255,7 +346,9 @@ static PyObject *process(PyObject *self, PyObject *args) {
 			PyLong_FromLong(1)
 		)
 	);
-	
+	PyList_SET_ITEM(retList,3,x1Values);
+	PyList_SET_ITEM(retList,4,y1Values);
+     	
 	free(params);
 
 	return retList;
