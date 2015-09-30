@@ -6,7 +6,6 @@
 
 
 
-void castData(long double** data,double** data2,int l);
 
 
 int main(int argv, char *argc[]){
@@ -35,7 +34,10 @@ In this version I won't implement it parallel since
 the Data is small enough and the transformation is one line of code! 
 
 */
-
+	
+	int length = (int) data[0];
+	double* data2; 
+	castData(&data,&data2,length);	
 
 	
 
@@ -48,28 +50,9 @@ maximum of the absolute value in data!
 
 */
 	
-	int length = (int) data[0];
-	double* data2; 
-	castData(&data,&data2,length);	
+
 	double a = findMax(length,&data2);	
 	
-
-}
-
-void castData(long double** data,double** data2,int l){
-	
-	*data2=(double*) malloc(sizeof(double)*l);
-	for(int i = 0; i < l; i++){
-
-		*(data2[i])=(double) *(data[i]);
-	
-
-
-	}
-
-
-
-
 
 }
 

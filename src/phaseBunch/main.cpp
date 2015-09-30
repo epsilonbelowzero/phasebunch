@@ -19,7 +19,7 @@ int main() {
     long double beamspeed 		= 0.467 * SOL,
 				circumference	= 108.5, //m
 				deltaP = 26e3;
-    int 		len = 1e4; //number of particles
+    int 		len = 1e1; //number of particles
     particle p;
     
     //HDF5-Handles;
