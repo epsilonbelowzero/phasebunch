@@ -7,10 +7,8 @@ void castData(long double** data,double** data2,int l){
 	
 	*data2=(double*) malloc(sizeof(double)*l);
 	for(int i = 0; i < l; i++){
-
-		*(data2[i])=(double) *(data[i]);
-	
-
+	////	printf("@step %i \n",i);
+		(*data2)[i]=(double) (*data)[i];	
 	}
 
 }
@@ -24,12 +22,9 @@ will be done in another version!
 */
 	for(int i = 0; i < l; i++){
 
-		*(data[i])=1/(*(data[i]));
+		(*data)[i]=1/((*data)[i]);
 
 	}
-
-
-
 
 }
 

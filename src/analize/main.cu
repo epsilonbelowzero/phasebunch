@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include "Reader.h"
 #include "Transform.h"
-#include "cuda/Sorter.h" // As long as Cuda is on this will work!
-
+#include "cuda/Sorter.h"	
 
 
 
@@ -21,10 +20,14 @@ data and params!
 	
         long double* data;
         long double* params = (long double*) malloc(sizeof(long double)*2);
-	hsize_t* dims = (hsize_t*) malloc(sizeof(hsize_t)*1);
-	readParams(argc,&params,&dims);	
-	data=(long double*) malloc(sizeof(long double)*dims[0]);
+	hsize_t* dims;
+	readParams(argc,&params,&dims);		
+	int length = (int) dims[0];
+	printf("The length is: %i\n",length);
+	data=(long double*) malloc(sizeof(long double)*(dims[0]));
 	readData(argc,&data);
+	printf("Debug 0\n");
+
 
 
 
@@ -35,12 +38,15 @@ the Data is small enough and the transformation is one line of code!
 
 */
 	
-	int length = (int) data[0];
+
 	double* data2; 
-	castData(&data,&data2,length);	
-
-	
-
+	printf("length in this scope %i\n",length);
+	castData(&data,&data2,length);
+	printf("Debug 1\n");	
+	Transform_inv(&data2,length);	
+ 	printf("Debug 2\n");	
+	double a = findMax(length,&data2);	
+	printf("The maximum is %e \n",a);	
 /*
 The next step is to sort the array! This can be done by just looking for the
 maximum of the absolute value in data!
@@ -50,8 +56,10 @@ maximum of the absolute value in data!
 
 */
 	
+free(params);
+free(dims);
+free(data);
 
-	double a = findMax(length,&data2);	
 	
 
 }
