@@ -12,7 +12,8 @@ __global__ void histkernel(double* data_dev,int* res_dev,int l,int l2,int l3,dou
 	int foo = blockDim.x*gridDim.x;
 
 	while(i < l){
- 	 	index =(int) floor(data_dev[i]/bin+l3);
+		
+
 		atomicAdd(&res_dev[index],1);		
 		i+=foo;	
 	}
