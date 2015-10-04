@@ -47,9 +47,10 @@ the Data is small enough and the transformation is one line of code!
 	printf("Debug 1\n");	
 	Transform_inv(&data2,length);	
 	Transform_inv(&params2,2);
-	printf("Debug 2\n");	
 	double a = findMax(length,&data2);	
+	printf("Debug 2\n");	
 	printf("The maximum is %e \n",a);	
+	printf("The inverse of this is %e \n",1/a);
 /*
 The next step is to sort the array! This can be done by just looking for the
 maximum of the absolute value in data!
