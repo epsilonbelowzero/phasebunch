@@ -45,6 +45,19 @@ void readData(char** argc, long double** data){
 
 }
 
+void saveHist(int** res,int l){
+
+
+	hid_t file;
+	hsize_t dims[1]= {l};
+	file = H5Fcreate("hist.h5",H5F_ACC_TRUNC,H5P_DEFAULT,H5P_DEFAULT);
+	H5LTmake_dataset(file,"/hist",1,dims,H5T_NATIVE_INT,*res);
+	H5Fclose(file);
+
+
+
+
+}
 
 
 

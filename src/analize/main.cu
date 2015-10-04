@@ -39,12 +39,15 @@ the Data is small enough and the transformation is one line of code!
 */
 	
 
-	double* data2; 
+	double* data2;
+        double* params2;	
 	printf("length in this scope %i\n",length);
 	castData(&data,&data2,length);
+	castData(&params,&params2,2);
 	printf("Debug 1\n");	
 	Transform_inv(&data2,length);	
- 	printf("Debug 2\n");	
+	Transform_inv(&params2,2);
+	printf("Debug 2\n");	
 	double a = findMax(length,&data2);	
 	printf("The maximum is %e \n",a);	
 /*
@@ -55,7 +58,18 @@ maximum of the absolute value in data!
 2. With the Maximum we can calculate how many 
 
 */
-	
+
+
+
+
+	int* res;
+        int k;
+
+  	makeHist(&data2,&res,&params2,a,length,&k);
+	printf("k:%i \n",k);	
+	saveHist(&res,k);
+
+
 free(params);
 free(dims);
 free(data);
