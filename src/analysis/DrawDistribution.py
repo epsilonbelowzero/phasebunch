@@ -24,3 +24,4 @@ ax.plot(dist[0], dist[1])
 ax.set_xlabel("$\mathbf{n \cdot dt}$")
 
 plt.show()
+

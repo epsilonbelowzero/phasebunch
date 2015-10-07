@@ -214,11 +214,12 @@ void insert2(long double *params, long double **array, int** y, long double** x,
 
 	**/
 
-	max = findMax(array,lines);
-	long T = (long) 1/params[0]
+	long double max = findMax(array,lines);
+	printf("1/T: %e \n",params[0]);
+	long double  T = (long double) 1/params[0];
         int a0 = (int)(2*ceil(max/params[0])+3); 	
 	int a1 = (int) (ceil(max/params[0])+3); 
-	
+	printf("T: %e \n",T);	
 
         **y = (int*)malloc(sizeof(int)*a0);
 	for(int i = 0; i<a0;i++){
@@ -226,17 +227,28 @@ void insert2(long double *params, long double **array, int** y, long double** x,
 	    *y[i]=0;
 
 	} 	
-	
+	int *y_t;
         //Now all the Values from array should be sorted into an
-	//Bin
+	//Bin value
+	//
+	//
+
+	#pragma omp parallel
+	{
+		const int numThread = omp_get_max_threads();
+		const int Threadid = omp_get_thread_num();
+		#pragma omp single
+		y_t = (int*) malloc(sizeof(int)*a0*numThread);
+
+		for(int i = 0; i < a0;i++){
+
+			y_t[i+Threadid*a0]=0;
+
+		}
+		
+
+	}
 	
-	 
-
-
-
-
-
-
 
 }
 
