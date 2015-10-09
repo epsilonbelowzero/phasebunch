@@ -51,6 +51,8 @@ set(LIBS ${LIBS} ${HDF5_LIBRARIES})
 #Setup the rest
 #############
 
+include_directories("${PROJECT_SOURCE_DIR}/include")
+
 if(${CUDA_FOUND})
 
 	message("-- Using CUDA")
