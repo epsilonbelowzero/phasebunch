@@ -23,7 +23,8 @@ __global__ void Histkernel(int l,int offset,double* data_dev,int* res_dev,double
 		}
 		else{
 
-		  	printf("Error: Bad index, index=%i\n",index);
+		  	printf("Error 1: Bad index, index=%i\n",index);
+			printf("Error 2: Bad Value %e\n",data_dev[tid]);
 		}	
 		tid += d;	
 	}	
@@ -33,16 +34,14 @@ __global__ void Histkernel(int l,int offset,double* data_dev,int* res_dev,double
 
 double findMax(double** data,int l){
 
-	double tempmax = 0;
+	double tempmax = -1e4;
 	for(int i = 0; i<l;i++){
 
 		if(tempmax < fabs((*data)[i])){
-
-			tempmax = (*data)[i];
-
+			tempmax = fabs((*data)[i]);
 		}
-	
 	}
+
 	return tempmax;
 }
 
