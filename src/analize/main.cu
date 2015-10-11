@@ -5,7 +5,7 @@
 #include "cuda/Histkernel.h"
 #include <assert.h>
 #include "include/Output.h"
-#include "Sanity.h"
+#include "include/Sanity.h"
 
 int main(int argc, char *argv[]){
 	
@@ -22,8 +22,8 @@ int main(int argc, char *argv[]){
 	closeFile(&file);
 	transform(data,(int)dims[0]);
 	makeHist(&data,&params,(int)dims[0],&hist,1000.0,&hl);		
-	histOut(&hist,hl);		
 	check_res(&hist,hl);	
+	histOut(&hist,hl);		
 	free(data);
 	free(params);
 	free(dims);

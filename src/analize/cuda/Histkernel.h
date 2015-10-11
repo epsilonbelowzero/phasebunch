@@ -16,9 +16,11 @@ __global__ void Histkernel(int l,int offset,double* data_dev,int* res_dev,double
 	int d = gridDim.x;
 	while(tid < l){
 		index = floor(data_dev[tid]/bs)+offset/2;
-		printf("Index is %i \n",index);
-		atomicAdd(&(res_dev[index]),1);	
-		tid += d;	
+		if(index >=0 && index < offset){
+
+			atomicAdd(&(res_dev[index]),1);	
+		
+		}	tid += d;	
 	}	
 }
 
@@ -45,12 +47,12 @@ void makeHist(double**  data, double** params, int l, int** res,double binsize,i
 	double* data_dev;
 	int* res_dev;
 	double max1 = findMax(data,l);
+	printf("The maximum is: %e\n",max1);
 	int offset = (int)(2*ceil(max1/binsize)+1);
  	assert(offset);
 	printf("Offset is: %i \n",offset);
  	*res =(int*)malloc(sizeof(int)*offset);
 	int count = 0;
-	cudaDeviceProp prop;
 	cudaGetDeviceCount(&count);
 	printf("count=%i \n",count);
 	cudaMalloc((void**)&data_dev,sizeof(double)*l);
@@ -60,10 +62,8 @@ void makeHist(double**  data, double** params, int l, int** res,double binsize,i
 	dim3 bpg = dim3(l/32);//Blocks per grid
 	dim3 tpb = dim3(32);//Threads per bock
 	Histkernel<<<bpg,tpb>>>(l,offset,data_dev,res_dev,binsize);
-	cudaMemcpy(*res,res_dev,offset*sizeof(int),cudaMemcpyDeviceToHost);	
-
+	cudaMemcpy((*res),res_dev,offset*sizeof(int),cudaMemcpyDeviceToHost);	
 	*hl = offset;
-
 	cudaFree(data_dev);
 	cudaFree(res_dev);
 
