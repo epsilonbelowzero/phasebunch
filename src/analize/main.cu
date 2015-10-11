@@ -11,7 +11,8 @@ int main(int argc, char *argv[]){
 	
 	assert(argc!= 1);
        	int* hist;
-	int hl;       
+	int hl;
+ 	double binsize = 1e4;	
 	double* data;
         double* params = (double*) malloc(sizeof(double)*2);
 	hsize_t* dims= (hsize_t*)malloc(sizeof(hsize_t));
@@ -21,7 +22,7 @@ int main(int argc, char *argv[]){
 	readData(&data,&file);
 	closeFile(&file);
 	transform(data,(int)dims[0]);
-	makeHist(&data,&params,(int)dims[0],&hist,1000.0,&hl);		
+	makeHist(&data,&params,(int)dims[0],&hist,binsize,&hl);		
 	check_res(&hist,hl);	
 	histOut(&hist,hl);		
 	free(data);

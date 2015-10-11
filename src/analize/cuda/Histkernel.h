@@ -13,14 +13,19 @@ __global__ void Histkernel(int l,int offset,double* data_dev,int* res_dev,double
 
 	int tid = threadIdx.x + blockDim.x*blockIdx.x;
 	int index = 0;
-	int d = gridDim.x;
+	int d = gridDim.x*blockDim.x;
 	while(tid < l){
 		index = floor(data_dev[tid]/bs)+offset/2;
 		if(index >=0 && index < offset){
 
 			atomicAdd(&(res_dev[index]),1);	
 		
-		}	tid += d;	
+		}
+		else{
+
+		  	printf("Error: Bad index, index=%i\n",index);
+		}	
+		tid += d;	
 	}	
 }
 
