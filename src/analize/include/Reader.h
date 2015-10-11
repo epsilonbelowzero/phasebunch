@@ -33,7 +33,7 @@ void getDims(hsize_t** dims,hid_t *handle){
 
 void readData(double** data,hid_t* handle){
 
-	H5LTread_dataset_double(*handle,"/signal",*data);
+	H5LTread_dataset_double(*handle,"/signal",*(data));
 }
 
 void dget(char* argv[],hid_t* handle,double** params,double** data,hsize_t** dims){
@@ -41,10 +41,7 @@ void dget(char* argv[],hid_t* handle,double** params,double** data,hsize_t** dim
 	openFile(handle,argv);
 	readParams(params,handle);
 	getDims(dims,handle);
-	printf("dims[0]= %i\n",*dims[0]);
-	*data = (double*) malloc(sizeof(double)*(*(dims[0])));
-	readData(data,handle);
-	closeFile(handle);
+	
 }
 
 

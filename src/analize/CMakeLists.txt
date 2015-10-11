@@ -20,7 +20,11 @@ project(analizer)
 ##############
 find_package(CUDA)
 
-
+#############
+#Compiler Flags
+############
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+message("-- Using ${CMAKE_CXX_FLAGS}")
 
 if(NOT ${CUDA_FOUND})
 

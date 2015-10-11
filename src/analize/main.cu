@@ -1,23 +1,29 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "Reader.h"
 #include "include/Transform.h"
-#include "cuda/Sorter.h"	
 #include "include/Reader.h"
-
-
+#include "cuda/Histkernel.h"
+#include <assert.h>
+#include "include/Output.h"
+#include "Sanity.h"
 
 int main(int argc, char *argv[]){
-
-        double* data;
+	
+	assert(argc!= 1);
+       	int* hist;
+	int hl;       
+	double* data;
         double* params = (double*) malloc(sizeof(double)*2);
 	hsize_t* dims= (hsize_t*)malloc(sizeof(hsize_t));
 	hid_t file; 
-	int* hist; 
 	dget(argv,&file,&params,&data,&dims);
-
-	transform_inv(&data,dims[0],&params);	
-
+	data = (double*) malloc(sizeof(double)*dims[0]);
+	readData(&data,&file);
+	closeFile(&file);
+	transform(data,(int)dims[0]);
+	makeHist(&data,&params,(int)dims[0],&hist,1000.0,&hl);		
+	histOut(&hist,hl);		
+	check_res(&hist,hl);	
 	free(data);
 	free(params);
 	free(dims);
