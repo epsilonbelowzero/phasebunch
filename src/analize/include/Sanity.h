@@ -6,8 +6,8 @@ void check_res(int** res,int l){
 	
 	int k = 0;
 	for(int i = 0 ; i < l ; i++){
+		
 		if((*res)[i]!= 0){
-
 			k+=(*res)[i];
 		}
 	}

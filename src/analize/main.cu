@@ -10,8 +10,8 @@
 int main(int argc, char *argv[]){
 	
 	assert(argc!= 1);
-       	int* hist;
-	int hl;
+       	int* hist1,*hist2;
+	int hl1,hl2;
  	double binsize = 1e4;	
 	double* data;
         double* params = (double*) malloc(sizeof(double)*2);
@@ -21,14 +21,17 @@ int main(int argc, char *argv[]){
 	data = (double*) malloc(sizeof(double)*dims[0]);
 	readData(&data,&file);
 	closeFile(&file);
+	makeHist(&data,&params,(int)dims[0],&hist1,&hl1);
 	transform(data,(int)dims[0]);
-	makeHist(&data,&params,(int)dims[0],&hist,binsize,&hl);		
-	check_res(&hist,hl);	
-	histOut(&hist,hl);		
+	makeHist_inv(&data,&params,(int)dims[0],&hist2,binsize,&hl2);		
+	check_res(&hist1,hl1);
+	check_res(&hist2,hl2);	
+	histOut(&hist1,&hist2,hl1,hl2);		
 	free(data);
 	free(params);
 	free(dims);
-	free(hist);
+	free(hist1);
+	free(hist2);
 }
 
 
