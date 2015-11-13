@@ -3,11 +3,14 @@
 
 
 #define DEBUG(x) printf("Debug %i\n",x);
-
+#define MAX_MINIMUM -2000000000
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
 #include <cuda.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+
 
 __global__ void Histkernel(int l,int offset,double* data_dev,int* res_dev,double bs,int b){
 
@@ -44,7 +47,44 @@ double findMax(double** data,int l){
 	return tempmax;
 }
 
+double findMax_inv(double** data,int l){
 
+	double tempmax = MAX_MINIMUM;
+	for(int i = 0; i < l; i++){
+		if(*data[i]!= 0){
+
+			if(tempmax < fabs(1/(*data)[i]){
+
+				tempmax = fabs(1/(*data)[i]);
+			}
+		} 
+	return tempmax;
+}
+
+
+
+void makeHist(double** data,double** params,int l,int** res1,int** res2,double binsize,int* hl){
+	
+	double* data_dev1;
+	double* res_dev1,*res_dev2;
+	double max1 = findMax(data,l);
+	double max2 = findMax_inv(data,l);
+	int l1 =  ceil(max1/dt*2+1);	
+	int l2 = ceil(max2/dt*2+1);	
+
+	cudaMalloc((void**)data_dev1,sizeof(double)*l);
+	cudaMalloc((void**)res_dev1,sizeof(int)*l1);
+	cudaMalloc((void**)res_dev2,sizeof(int)*l2);
+	
+		
+		
+}
+
+
+
+
+
+/*
 void makeHist_inv(double**  data, double** params, int l, int** res,double binsize,int* hl){
 
 	double* data_dev;
@@ -101,5 +141,5 @@ void makeHist(double**data,double** params,int l, int **res,int* hl){
 	(*res)[0] = 0;
 	*hl = 1;
 }
-
+*/
 #endif
